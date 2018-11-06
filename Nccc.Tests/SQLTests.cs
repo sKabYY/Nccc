@@ -53,12 +53,10 @@ grant select, update, insert, delete on MESSAGE_NOTIFY_TASK  to dsp_app;
 create synonym dsp_app.MESSAGE_NOTIFY_TASK  for dsp_adm.MESSAGE_NOTIFY_TASK ;
 
 ";
-
-        [TestMethod]
-        public void Test()
+        private static NcParser _GetSqlParser()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var parser = NcParser.LoadFromAssembly(assembly, "Nccc.Tests.sql.grammer", p =>
+            return NcParser.LoadFromAssembly(assembly, "Nccc.Tests.sql.grammer", p =>
             {
                 p.CaseSensitive = false;
                 p.Scanner.Delims = new string[] { "(", ")", "[", "]", "{", "}", ",", ".", ";" };
@@ -68,9 +66,27 @@ create synonym dsp_app.MESSAGE_NOTIFY_TASK  for dsp_adm.MESSAGE_NOTIFY_TASK ;
                 p.Scanner.CommentEnd = "*/";
                 p.Scanner.LispChar = new string[] { };
             });
+        }
+
+        [TestMethod]
+        public void Test()
+        {
+            var parser = _GetSqlParser();
             var parseResult = parser.ScanAndParse(sql);
             Console.WriteLine(parseResult.ToSExp().ToPrettyString());
             Assert.IsTrue(parseResult.IsSuccess());
+        }
+
+        [TestMethod]
+        public void Test100Times()
+        {
+            var times = 100;
+            var parser = _GetSqlParser();
+            for (var i = 0; i < times; ++i)
+            {
+                var parseResult = parser.ScanAndParse(sql);
+                Assert.IsTrue(parseResult.IsSuccess());
+            }
         }
     }
 }
