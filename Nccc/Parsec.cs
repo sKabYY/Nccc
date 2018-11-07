@@ -12,6 +12,7 @@ namespace Nccc
         public Scanner Scanner { get; set; } = new Scanner();
         protected IParser RootParser { get; set; }
         private readonly IDictionary<string, IParser> _env = new Dictionary<string, IParser>();
+        public bool LeftRecurDetection { get; set; } = true;
 
         public ParseResult ScanAndParse(string src)
         {
@@ -21,7 +22,7 @@ namespace Nccc
                 throw new ParseException("RootParser is uninitialized");
             }
             _ResetMemorizedParsers();
-            var r = RootParser.Parse(toks, ParseStack.Empty);
+            var r = RootParser.Parse(toks, LeftRecurDetection ? ParseStack.Empty : FakeParseStack.Empty);
             if (r.Rest.IsEof())
             {
                 return r;
@@ -393,7 +394,7 @@ namespace Nccc
             return _OutputNodes(nodes, rest, startIdx, endIdx, message, failRest);
         }
 
-        public static void Fatal(string message, IParser parser, BaseStream<Token> toks, ParseStack stk)
+        public static void Fatal(string message, IParser parser, BaseStream<Token> toks, IParseStack stk)
         {
             throw new ParseException($"{message}\n" +
                 $"parser: {parser.ToString()}\n" +
@@ -404,20 +405,20 @@ namespace Nccc
 
     public interface IParser
     {
-        ParseResult Parse(BaseStream<Token> toks, ParseStack stk);
+        ParseResult Parse(BaseStream<Token> toks, IParseStack stk);
     }
 
     public class ParserImpl : IParser
     {
         private readonly string _name;
-        private readonly Func<BaseStream<Token>, ParseStack, ParseResult> _parse;
-        public ParserImpl(string name, Func<BaseStream<Token>, ParseStack, ParseResult> parse)
+        private readonly Func<BaseStream<Token>, IParseStack, ParseResult> _parse;
+        public ParserImpl(string name, Func<BaseStream<Token>, IParseStack, ParseResult> parse)
         {
             _name = name;
             _parse = parse;
         }
-        public ParserImpl(Func<BaseStream<Token>, ParseStack, ParseResult> parse): this(null, parse) { }
-        public ParseResult Parse(BaseStream<Token> toks, ParseStack stk)
+        public ParserImpl(Func<BaseStream<Token>, IParseStack, ParseResult> parse): this(null, parse) { }
+        public ParseResult Parse(BaseStream<Token> toks, IParseStack stk)
         {
             if (stk.Has(this, toks))
             {
@@ -440,7 +441,7 @@ namespace Nccc
         {
             _parser = parser;
         }
-        public ParseResult Parse(BaseStream<Token> toks, ParseStack stk)
+        public ParseResult Parse(BaseStream<Token> toks, IParseStack stk)
         {
             var offset = toks.Car().Start.Offset;
             if (!_memo.TryGetValue(offset, out ParseResult r))
@@ -510,15 +511,23 @@ namespace Nccc
         }
     }
 
-    public class ParseStack
+    public interface IParseStack
+    {
+        bool IsEmpty();
+        bool Has(IParser parser, BaseStream<Token> toks);
+        IParseStack Extend(IParser parser, BaseStream<Token> toks);
+        ListSExp ToSExp();
+    }
+
+    public class ParseStack: IParseStack
     {
         private readonly IParser _parser;
         private readonly BaseStream<Token> _toks;
-        private readonly ParseStack _prev;
+        private readonly IParseStack _prev;
 
-        public static ParseStack Empty { get; } = new ParseStack(null, null, null);
+        public static IParseStack Empty { get; } = new ParseStack(null, null, null);
 
-        private ParseStack(IParser parser, BaseStream<Token> toks, ParseStack prev)
+        private ParseStack(IParser parser, BaseStream<Token> toks, IParseStack prev)
         {
             _parser = parser;
             _toks = toks;
@@ -537,7 +546,7 @@ namespace Nccc
             return _prev.Has(parser, toks);
         }
 
-        public ParseStack Extend(IParser parser, BaseStream<Token> toks)
+        public IParseStack Extend(IParser parser, BaseStream<Token> toks)
         {
             return new ParseStack(parser, toks, this);
         }
@@ -557,9 +566,34 @@ namespace Nccc
                 return SExp.List();
             }
         }
-
     }
-    
+
+    public class FakeParseStack : IParseStack
+    {
+        private FakeParseStack() { }
+        public static IParseStack Empty { get; } = new FakeParseStack();
+
+        public IParseStack Extend(IParser parser, BaseStream<Token> toks)
+        {
+            return this;
+        }
+
+        public bool Has(IParser parser, BaseStream<Token> toks)
+        {
+            return false;
+        }
+
+        public bool IsEmpty()
+        {
+            return true;
+        }
+
+        public ListSExp ToSExp()
+        {
+            return SExp.List();
+        }
+    }
+
     public class Node
     {
         public string Type { get; set; }

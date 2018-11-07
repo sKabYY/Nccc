@@ -53,10 +53,23 @@ namespace Nccc
             public TextPosition End { get; set; }
         }
 
+        private static bool _StartsWithFromOffset(string str, int offset, string prefix)
+        {
+            if (str.Length - offset < prefix.Length) return false;
+            for (var i = 0; i < prefix.Length; ++i)
+            {
+                if (str[offset + i] != prefix[i])
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         private static _MatchResult _StartsWith(string str, TextPosition start, string prefix)
         {
             if (prefix == null) return null;
-            if (str.Substring(start.Offset).StartsWith(prefix))
+            if (_StartsWithFromOffset(str, start.Offset, prefix))
             {
                 return new _MatchResult(prefix, start.Shift(prefix));
             }
@@ -80,7 +93,7 @@ namespace Nccc
         {
             for (var i = start.Offset; i < str.Length; ++i)
             {
-                if (str.Substring(i).StartsWith(prefix))
+                if (_StartsWithFromOffset(str, i, prefix))
                 {
                     return start.Shift(str.Substring(start.Offset, i - start.Offset));
                 }
