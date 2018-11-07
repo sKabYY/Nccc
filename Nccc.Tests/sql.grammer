@@ -5,56 +5,56 @@ stm = (@or create_table:create-table-stm
            create_index:create-index-stm
            grant:grant-stm
            create_synonym:create-synonym-stm
-).
+)
 
-stms = (@+ stm ';').
+stms = (@+ stm ';')
 
 stm = (@or create_table:create-table-stm
            comment:comment-stm
            create_index:create-index-stm
            grant:grant-stm
            create_synonym:create-synonym-stm
-).
+)
 
-identifier = (@! 'CONSTRAINT') /^[a-zA-Z0-9_]+$/.
+identifier = (@! 'CONSTRAINT') /^[a-zA-Z0-9_]+$/
 
-string = <str>.
+string = <str>
 
 ;;; CREATE TABLE
 
 create-table-stm =
   'CREATE TABLE' table '('
     table-items:(@,+ ',' create-table-item)
-  ')'.
+  ')'
 
-table = table:(schema-prefix table-name).
-schema-prefix = (@? schema-name '.').
-schema-name = identifier.
-table-name = identifier.
+table = table:(schema-prefix table-name)
+schema-prefix = (@? schema-name '.')
+schema-name = identifier
+table-name = identifier
 
 create-table-item = (@or column_definition:column-definition
-                         constraint:table-level-constraint).
+                         constraint:table-level-constraint)
 
 column-definition =
   simple-column-name DataType
   (@* constraint:column-level-constraint)
   (@? (@? 'WITH') 'DEFAULT' default:DefaultConstantExpression)
-  (@* constraint:column-level-constraint).
+  (@* constraint:column-level-constraint)
 DataType =
   (@or character-datatype
        number-datatype
        datetime-datatype
-       large-object-datatype).
+       large-object-datatype)
 character-datatype =
-  varchar2:('VARCHAR2 (' size ')').
+  varchar2:('VARCHAR2 (' size ')')
 number-datatype =
   (@or number:('NUMBER' (@? '(' size ')'))  ; TODO precision
-       float:('FLOAT' (@? '(' size ')'))).
+       float:('FLOAT' (@? '(' size ')')))
 datetime-datatype =
-  (@or date:'DATE' timestamp:'TIMESTAMP').  ; TODO
+  (@or date:'DATE' timestamp:'TIMESTAMP')  ; TODO
 large-object-datatype =
-  (@or blob:'BLOB' clob:'CLOB' nclob:'NCLOB' bfile:'BFILE').
-size = /\d+/.
+  (@or blob:'BLOB' clob:'CLOB' nclob:'NCLOB' bfile:'BFILE')
+size = /\d+/
 DefaultConstantExpression =
   (@or null:'NULL'
        ('CURRENT' (@or current_schema:'SCHEMA'
@@ -70,12 +70,12 @@ DefaultConstantExpression =
        current_time:('CURRENT TIME') current_time:'CURRENT_TIME'
        current_timestamp:('CURRENT TIMESTAMP')
        current_timestamp:'CURRENT_TIMESTAMP'
-       #|literal:literal|#).
+       #|literal:literal|#)
 
 ;literal = ??TODO
 
-simple-column-name = identifier.
-simple-column-names = (@,+ ',' simple-column-name).
+simple-column-name = identifier
+simple-column-names = (@,+ ',' simple-column-name)
 
 column-level-constraint =
   name:(@? 'CONSTRAINT' constraint-name)
@@ -83,23 +83,23 @@ column-level-constraint =
        ; check:('CHECK' search-condition)  ; TODO
        primary_key:('PRIMARY KEY')
        unique:('UNIQUE')
-       references_clause:references-clause).
+       references_clause:references-clause)
 
-constraint-name = identifier.
+constraint-name = identifier
 
 references-clause =
   'REFERENCES' table
   column_names:(@? '(' simple-column-names ')')
   (@or ((@? on-delete) (@? on-update))
-       ((@? on-update) (@? on-delete))).
+       ((@? on-update) (@? on-delete)))
 on-delete =
   on_delete:('ON DELETE' (@or on_action:('NO ACTION')
                                 restrict:'RESTRICT'
                                 cascade:'CASCADE'
-                                set_null:'SET NULL')).
+                                set_null:'SET NULL'))
 on-update =
   on_update:('ON UPDATE' (@or no_action:('NO ACTION')
-                                restrict:'RESTRICT')).
+                                restrict:'RESTRICT'))
 
 table-level-constraint =
   name:(@? 'CONSTRAINT' constraint-name)
@@ -107,7 +107,7 @@ table-level-constraint =
        primary_key:('PRIMARY KEY (' simple-column-names ')')
        unique:('UNIQUE (' simple-column-names ')')
        foreign_key:('FOREIGN KEY (' simple-column-names ')'
-                              ref:references-clause)).
+                              ref:references-clause))
 
 ;;; COMMENT
 
@@ -119,7 +119,7 @@ comment-stm =
        operator_comment:('OPERATOR' schema-prefix identifier)
        indextype_comment:('INDEXTYPE' schema-prefix identifier)
        materialized_view_comment:('MATERIALIZED VIEW' identifier))
-  'IS' string.
+  'IS' string
 
 ;;; CREATE INDEX
 
@@ -128,22 +128,22 @@ create-index-stm =
   object:(schema-prefix identifier) 'ON'
   (@or #|cluster-index-clause|#
        table_index_clause:table-index-clause
-       #|bitmap-join-index-clause|#).
+       #|bitmap-join-index-clause|#)
 
-column = t_alias:(@? identifier '.') simple-column-name.
+column = t_alias:(@? identifier '.') simple-column-name
 
 table-index-clause =
   table t_alias:(@? identifier) '('
     indexes:(@,+ ',' index:(index_expr (@? (@or asc:'ASC' desc:'DESC'))))
-  ')' #|(@? index_properties)|#.
+  ')' #|(@? index_properties)|#
 
-index_expr = (@or column #|column_expression|#).
+index_expr = (@or column #|column_expression|#)
 
 ;;; GRANT
 
 grant-stm =
   'GRANT' (@or #|grant-system-privileges|#
-               grant-object-privileges).
+               grant-object-privileges)
 
 grant-object-privileges =
   (@,+ ','
@@ -154,7 +154,7 @@ grant-object-privileges =
                                            (@? 'IDENTIFIED BY' string))
                              public:'PUBLIC'))
   hierarchy_option:(@? hierarchy:('WITH HIERARCHY OPTION'))
-  grant_option:(@? grant:('WITH GRANT OPTION')).
+  grant_option:(@? grant:('WITH GRANT OPTION'))
 
 object-privilege =
   (@or alter:'ALTER' delete:'DELETE' execute:'EXECUTE' debug:'DEBUG'
@@ -162,11 +162,11 @@ object-privilege =
        on_commit_refresh:('ON COMMIT REFRESH')
        query_rewrite:('QUERY REWRITE')
        read:'READ' references:'REFERENCES' select:'SELECT' under:'UNDER'
-       update:'UPDATE' write:'WRITE').
+       update:'UPDATE' write:'WRITE')
 
 ;;; CREATE SYNONYM
 create-synonym-stm =
   'CREATE' replace_option:(@? replace:'OR REPLACE')
            public_option:(@? public:'PUBLIC')
   'SYNONYM' synonym:(schema-prefix identifier)
-  'FOR' object:(schema-prefix identifier #|(@? '@' dblink)|#).
+  'FOR' object:(schema-prefix identifier #|(@? '@' dblink)|#)

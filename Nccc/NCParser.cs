@@ -49,6 +49,7 @@ namespace Nccc
 
             var lparen = PEq("(");
             var rparen = PEq(")");
+            var eq = PEq("=");
             var word = PTokenType(TokenType.Str);
             var regex = PTokenType(TokenType.Regex);
             var variable = CIfFail("invalid var", PRegex(variablePattern));
@@ -83,7 +84,7 @@ namespace Nccc
                 CIs(REGEX_EXP, regex),
                 CIs(VAR_EXP, CSeq(variable, CNot(PEq(":"))))));
 
-            var def_stm = CIs(DEF_STM, CSeq(variable, PEq("="), CPlus(exp), PEq(".")));
+            var def_stm = CIs(DEF_STM, CSeq(variable, eq, CPlus(exp, CNot(eq))));
             var root_stm = CIs(DEF_ROOT, CSeq(PEq("::"), variable));
 
             RootParser = CIs(PROGRAM, CSeq(root_stm, CStar(def_stm)));

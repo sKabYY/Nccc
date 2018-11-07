@@ -1,0 +1,9 @@
+﻿:: json
+
+json = (@or array object value).
+
+array = '[' (@,* ',' json) ']'.
+
+object = '{' (@* <str> ':' json) '}'.
+
+value = (@or <str> <number>).

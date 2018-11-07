@@ -273,14 +273,13 @@ namespace Nccc
             var parser = CSeq(ps);
             return new ParserImpl((toks, stk) =>
             {
-                if (toks.IsEof())
+                if (!toks.IsEof())
                 {
-                    return _OutputFail("NOT fail: reach eof", toks);
-                }
-                var r = parser.Parse(toks, stk);
-                if (r.IsSuccess())
-                {
-                    return _OutputFail("NOT fail", toks);
+                    var r = parser.Parse(toks, stk);
+                    if (r.IsSuccess())
+                    {
+                        return _OutputFail("NOT fail", toks);
+                    }
                 }
                 return _OutputEmpty(toks, toks.Position(), toks.Position());
             });

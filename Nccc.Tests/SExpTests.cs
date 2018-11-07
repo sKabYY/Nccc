@@ -11,12 +11,12 @@ namespace Nccc.Tests
         public const string grammer = @"
 :: sexps
 
-sexps = (@+ sexp).
-sexp = (@or item o:(open sexps close)).
+sexps = (@+ sexp)
+sexp = (@or item o:(open sexps close))
 
-open = (@or '(' '[').
-close = (@or ')' ']').
-item = (@! (@or open close)) <*>.
+open = (@or '(' '[')
+close = (@or ')' ']')
+item = (@! (@or open close)) <*>
 ";
 
         [TestMethod]
