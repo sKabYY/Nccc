@@ -20,6 +20,7 @@ namespace Nccc
             {
                 throw new ParseException("RootParser is uninitialized");
             }
+            _ResetMemorizedParsers();
             var r = RootParser.Parse(toks, ParseStack.Empty);
             if (r.Rest.IsEof())
             {
@@ -43,8 +44,24 @@ namespace Nccc
             }
         }
 
+        private IList<MemorizedParser> _memorizedParsers = new List<MemorizedParser>();
+        private MemorizedParser _MakeMemorizedParser(IParser parser)
+        {
+            var memorizedParser = new MemorizedParser(parser);
+            _memorizedParsers.Add(memorizedParser);
+            return memorizedParser;
+        }
+        private void _ResetMemorizedParsers()
+        {
+            foreach (var p in _memorizedParsers)
+            {
+                p.Clear();
+            }
+        }
+
         protected IParser DefParser(string name, IParser parser)
         {
+            parser = _MakeMemorizedParser(parser);
             _EnvSet(name, parser);
             return parser;
         }
@@ -412,6 +429,34 @@ namespace Nccc
         {
             if (_name == null) return base.ToString();
             return $"<Parser:{_name}>";
+        }
+    }
+
+    public class MemorizedParser : IParser
+    {
+        private readonly IDictionary<int, ParseResult> _memo = new Dictionary<int, ParseResult>();
+        private readonly IParser _parser;
+        public MemorizedParser(IParser parser)
+        {
+            _parser = parser;
+        }
+        public ParseResult Parse(BaseStream<Token> toks, ParseStack stk)
+        {
+            var offset = toks.Car().Start.Offset;
+            if (!_memo.TryGetValue(offset, out ParseResult r))
+            {
+                r = _parser.Parse(toks, stk);
+                _memo[offset] = r;
+            }
+            return r;
+        }
+        public void Clear()
+        {
+            _memo.Clear();
+        }
+        public override string ToString()
+        {
+            return _parser.ToString();
         }
     }
 
