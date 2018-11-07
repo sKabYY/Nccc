@@ -13,6 +13,7 @@ namespace Nccc
         protected IParser RootParser { get; set; }
         private readonly IDictionary<string, IParser> _env = new Dictionary<string, IParser>();
         public bool LeftRecurDetection { get; set; } = true;
+        public bool UseMemorizedParser { get; set; } = true;
 
         public ParseResult ScanAndParse(string src)
         {
@@ -62,7 +63,10 @@ namespace Nccc
 
         protected IParser DefParser(string name, IParser parser)
         {
-            parser = _MakeMemorizedParser(parser);
+            if (UseMemorizedParser)
+            {
+                parser = _MakeMemorizedParser(parser);
+            }
             _EnvSet(name, parser);
             return parser;
         }
