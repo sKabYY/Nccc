@@ -53,9 +53,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SExpTests.cs" />
     <Compile Include="SQLTests.cs" />
+    <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Json\json.grammer" />
+    <EmbeddedResource Include="Json\json.grammer" />
+    <EmbeddedResource Include="Json\sample.json" />
     <None Include="packages.config" />
     <EmbeddedResource Include="sql.grammer" />
   </ItemGroup>

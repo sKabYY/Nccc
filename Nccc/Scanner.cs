@@ -18,6 +18,7 @@ namespace Nccc
         public string[] QuotationMarks { get; set; }
         public string[] RegexMarks { get; set; }
         public string[] LispChar { get; set; }
+        public string NumberRegex { get; set; }
         public string[] SignificantWhitespaces { get; set; }
 
         public Scanner()
@@ -33,6 +34,7 @@ namespace Nccc
             QuotationMarks = new string[] { "\"" };
             RegexMarks = new string[] { };
             LispChar = new string[] { "#\\", "?\\" };
+            NumberRegex = "([+-]?\\d+(\\.\\d+)?([Ee]-?\\d+)?)";
             SignificantWhitespaces = new string[] { };
         }
 
@@ -101,6 +103,11 @@ namespace Nccc
             return null;
         }
 
+        private static Match _MatchFrom(string str, TextPosition start, string pattern)
+        {
+            return new Regex($"^{pattern}").Match(str, start.Offset, str.Length - start.Offset);
+        }
+
         public Token Scan1(String str, TextPosition start)
         {
             _MatchResult mr;
@@ -159,7 +166,8 @@ namespace Nccc
             if (mr != null)
             {
                 var mark = mr.Text;
-                var matchData = Regex.Match(str.Substring(start.Offset), $"{mark}(\\\\{mark}|[^{mark}])*{mark}");
+                var matchData = _MatchFrom(str, start, $"{mark}(\\\\{mark}|[^{mark}])*{mark}");
+                //var matchData = Regex.Match(str.Substring(start.Offset), $"{mark}(\\\\{mark}|[^{mark}])*{mark}");
                 if (!matchData.Success)
                 {
                     throw new ScanException("string match error", start, start.ShiftToEnd(str));
@@ -173,7 +181,7 @@ namespace Nccc
             if (mr != null)
             {
                 var mark = mr.Text;
-                var matchData = Regex.Match(str.Substring(start.Offset), $"{mark}(\\\\{mark}|[^{mark}])*{mark}");
+                var matchData = _MatchFrom(str, start, $"{mark}(\\\\{mark}|[^{mark}])*{mark}");
                 if (!matchData.Success)
                 {
                     throw new ScanException("string match error", start, start.ShiftToEnd(str));
@@ -182,8 +190,17 @@ namespace Nccc
                 var text = matchText.Substring(mark.Length, matchText.Length - 2 * mark.Length).Replace($"\\{mark}", mark);
                 return Token.MakeRegex(text, start, start.Shift(matchText));
             }
-            // scheme/elisp char
-            // TODO
+            // TODO: scheme/elisp char
+            // TODO: more literal type
+            if (NumberRegex != null)
+            {
+                var matchData = _MatchFrom(str, start, NumberRegex);
+                if (matchData.Success)
+                {
+                    var matchText = matchData.Value;
+                    return Token.MakeNumber(matchText, start, start.Shift(matchText));
+                }
+            }
             // identifier or literal type
             var sb = new StringBuilder();
             var pos = start;
@@ -207,7 +224,6 @@ namespace Nccc
                     break;
                 }
             }
-            // TODO: literal type
             return Token.MakeToken(sb.ToString(), start, pos);
         }
     }
@@ -219,6 +235,7 @@ namespace Nccc
         Newline,
         Regex,
         Str,
+        Number,
         Token,
     }
 
@@ -282,6 +299,17 @@ namespace Nccc
             return new Token
             {
                 Type = TokenType.Str,
+                Text = text,
+                Start = start,
+                End = end
+            };
+        }
+
+        public static Token MakeNumber(string text, TextPosition start, TextPosition end)
+        {
+            return new Token
+            {
+                Type = TokenType.Number,
                 Text = text,
                 Start = start,
                 End = end

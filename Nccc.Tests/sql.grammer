@@ -54,7 +54,7 @@ datetime-datatype =
   (@or date:'DATE' timestamp:'TIMESTAMP')  ; TODO
 large-object-datatype =
   (@or blob:'BLOB' clob:'CLOB' nclob:'NCLOB' bfile:'BFILE')
-size = /\d+/
+size = <number>
 DefaultConstantExpression =
   (@or null:'NULL'
        ('CURRENT' (@or current_schema:'SCHEMA'

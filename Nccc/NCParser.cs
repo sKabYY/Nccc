@@ -39,13 +39,13 @@ namespace Nccc
 
         public NcPGP()
         {
-            Scanner.Delims = new string[] { "(", ")", "[", "]", "{", "}", "<", ">", "`", "::", "=", ":", ".", "~", "??" };
+            Scanner.Delims = new string[] { "(", ")", "[", "]", "{", "}", "<", ">", "`", "::", "=", ":", "~", "??" };
             Scanner.QuotationMarks = new string[] { "'" };
             Scanner.RegexMarks = new string[] { "/" };
             Scanner.CommentStart = "#|";
             Scanner.CommentEnd = "|#";
 
-            var variablePattern = @"^[a-zA-Z_\-][a-zA-Z0-9_\-]*$";
+            var variablePattern = @"[a-zA-Z_\-][a-zA-Z0-9_\-]*";
 
             var lparen = PEq("(");
             var rparen = PEq(")");
@@ -148,13 +148,7 @@ namespace Nccc
                         return PEq(word, CaseSensitive);
                     }
                 });
-                type(NcPGP.REGEX_EXP, es =>
-                {
-                    var pattern = es.First().Value;
-                    if (!pattern.StartsWith("^")) pattern = "^" + pattern;
-                    if (!pattern.EndsWith("$")) pattern = pattern + "$";
-                    return PRegex(pattern);
-                });
+                type(NcPGP.REGEX_EXP, es => PRegex(es.First().Value));
                 type(NcPGP.VAR_EXP, es => Get(es.First().Value));
             });
         }

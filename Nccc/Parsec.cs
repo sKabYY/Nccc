@@ -191,8 +191,11 @@ namespace Nccc
 
         protected IParser PRegex(string pattern, string failMessage = null)
         {
+            var origPattern = pattern;
+            if (!pattern.StartsWith("^")) pattern = "^" + pattern;
+            if (!pattern.EndsWith("$")) pattern = pattern + "$";
             var regex = new Regex(pattern);
-            return PTokenPred(failMessage ?? $"not match regex /{pattern}/", tok =>
+            return PTokenPred(failMessage ?? $"not match regex /{origPattern}/", tok =>
             {
                 if (!tok.IsToken()) return false;
                 return regex.IsMatch(tok.Text);

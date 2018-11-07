@@ -1,9 +1,12 @@
 ﻿:: json
 
-json = (@or array object value).
+json = (@or array:array object:object value)
 
-array = '[' (@,* ',' json) ']'.
+array = '[' (@,* ',' json) ']'
 
-object = '{' (@* <str> ':' json) '}'.
+object = '{' (@,* ',' pair:(key:<str> ':' value:json)) '}'
 
-value = (@or <str> <number>).
+value = (@or string:<str>
+             number:<number>
+			 bool:/true|false/
+			 null:'null')
