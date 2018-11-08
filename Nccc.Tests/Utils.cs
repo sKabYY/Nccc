@@ -1,4 +1,7 @@
-﻿using System;
+﻿using DiffPlex;
+using DiffPlex.DiffBuilder;
+using DiffPlex.DiffBuilder.Model;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,12 +15,39 @@ namespace Nccc.Tests
     {
         public static string ReadFromAssembly(string path)
         {
-            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(path))
-            using (var reader = new StreamReader(stream))
-            {
-                return reader.ReadToEnd();
-            }
+            return NcPGP.ReadStringFromAssembly(Assembly.GetExecutingAssembly(), path);
+        }
+        public static DiffPiece[] DiffAndShow(ParseResult before, ParseResult after)
+        {
+            return DiffAndShow(before.ToSExp().ToPrettyString(), after.ToSExp().ToPrettyString());
         }
 
+        public static DiffPiece[] DiffAndShow(string before, string after)
+        {
+            var diffBuilder = new InlineDiffBuilder(new Differ());
+            var diff = diffBuilder.BuildDiffModel(before, after);
+            var oldColor = Console.ForegroundColor;
+            foreach (var line in diff.Lines)
+            {
+                switch (line.Type)
+                {
+                    case ChangeType.Inserted:
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write("+ ");
+                        break;
+                    case ChangeType.Deleted:
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.Write("- ");
+                        break;
+                    default:
+                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.Write("  ");
+                        break;
+                }
+                Console.WriteLine(line.Text);
+            }
+            Console.ForegroundColor = oldColor;
+            return diff.Lines.Where(line => line.Type != ChangeType.Unchanged).ToArray();
+        }
     }
 }

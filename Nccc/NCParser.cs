@@ -43,6 +43,7 @@ namespace Nccc
         public const string GLOB_EXP = "glob-exp";
         public const string OP_EXP = "op-exp";
         public const string SEQ_EXP = "seq-exp";
+        public const string ERR_EXP = "err-exp";
         public const string ANY_EXP = "any-exp";
         public const string TOKEN_TYPE_EXP = "token-type-exp";
         public const string DBG_EXP = "dbg-exp";
@@ -122,6 +123,7 @@ namespace Nccc
             var named_exp = CSeq(variable, PEq(":"), Get(EXP));
             var glob_exp = CSeq(PEq("~"), Get(EXP));
             var op_exp = CSeq(lparen, cmb_op, CStar(Get(EXP)), rparen);
+            var err_exp = CSeq(lparen, PEq("@err"), PTokenType(TokenType.Str), CPlus(Get(EXP)), rparen);
             var seq_exp = CSeq(lparen, CPlus(Get(EXP)), rparen);
             var dbg_exp = CSeq(PEq("["), CPlus(Get(EXP)), PEq("]"));
             var any_exp = CSeq(PEq("<"), PEq("*"), PEq(">"));
@@ -131,6 +133,7 @@ namespace Nccc
                 CIs(NAMED_EXP, named_exp),
                 CIs(GLOB_EXP, glob_exp),
                 CIs(OP_EXP, op_exp),
+                CIs(ERR_EXP, err_exp),
                 CIs(SEQ_EXP, seq_exp),
                 CIs(ANY_EXP, any_exp),
                 CIs(TOKEN_TYPE_EXP, token_type_exp),
@@ -149,14 +152,19 @@ namespace Nccc
                 CIs(DEF_SECTION, CStar(def_stm))));
         }
 
-        public static string GetNcGrammerSource()
+        public static string ReadStringFromAssembly(Assembly assembly, string path)
         {
-            var path = "Nccc.nccc.grammer";
-            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(path))
+            using (var stream = assembly.GetManifestResourceStream(path))
             using (var reader = new StreamReader(stream))
             {
                 return reader.ReadToEnd();
             }
+        }
+
+        public static string GetNcGrammerSource()
+        {
+            return ReadStringFromAssembly(Assembly.GetExecutingAssembly(),
+                "Nccc.nccc.grammer");
         }
     }
 
@@ -289,6 +297,7 @@ namespace Nccc
                 type(NcPGP.NAMED_EXP, es => CIs(es.First().Value, _ValueOf(es[1])));
                 type(NcPGP.GLOB_EXP, es => CGlob(_ValueOf(es.First())));
                 type(NcPGP.OP_EXP, es => _ApplyOp(es.First(), _ValueOf(es.Skip(1))));
+                type(NcPGP.ERR_EXP, es => CIfFail(es.First().Value, CSeq(_ValueOf(es.Skip(1)))));
                 type(NcPGP.SEQ_EXP, es => CSeq(_ValueOf(es)));
                 type(NcPGP.ANY_EXP, es => PAny());
                 type(NcPGP.TOKEN_TYPE_EXP, es => PTokenType(es.First().Value));
@@ -352,12 +361,8 @@ namespace Nccc
 
         public static NcParser LoadFromAssembly(Assembly assembly, string path, Action<NcParser> init = null)
         {
-            using (var stream = assembly.GetManifestResourceStream(path))
-            using (var reader = new StreamReader(stream))
-            {
-                var src = reader.ReadToEnd();
-                return Load(src, init);
-            }
+            var src = NcPGP.ReadStringFromAssembly(assembly, path);
+            return Load(src, init);
         }
     }
 }
