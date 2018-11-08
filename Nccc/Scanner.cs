@@ -175,7 +175,11 @@ namespace Nccc
                     throw new ScanException("string match error", start, start.ShiftToEnd(str));
                 }
                 var matchText = matchData.Value;
-                var text = matchText.Substring(mark.Length, matchText.Length - 2 * mark.Length).Replace($"\\{mark}", mark);
+                var text = matchText.Substring(mark.Length, matchText.Length - 2 * mark.Length)
+                    .Replace($"\\{mark}", mark)
+                    .Replace(@"\n", "\n")
+                    .Replace(@"\t", "\t")
+                    .Replace(@"\\", @"\");
                 return Token.MakeStr(text, start, start.Shift(matchText));
             }
             // regex
