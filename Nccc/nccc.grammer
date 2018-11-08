@@ -1,0 +1,88 @@
+﻿:: program
+
+#| ======================================================= |#
+
+@set-delims '(' ')' '[' ']' '{' '}' '<' '>' '`' '::' '=' ':' '~' '??'
+@set-line-comment ';'
+@set-comment-start '#|'
+@set-comment-end '|#'
+@set-operators
+@set-quotation-marks '\''
+@set-regex-marks '/'
+@set-lisp-char
+@set-significant-whitespaces
+
+@case-sensitive on
+@split-word on
+@left-recur-detection on
+@use-memorized-parser on
+
+#| ======================================================= |#
+
+program = program:(def-root:def-root
+                   option-section:(@* (@or scanner-option-stm:scanner-option-stm
+				                           parser-option-stm:parser-option-stm))
+				   def-section:(@* def-stm:def-stm))
+
+#| === root === |#
+
+def-root = '::' variable
+
+#| === option === |#
+
+scanner-option-stm = scanner-option (@* <str>)
+parser-option-stm = parser-option (@or on:'on' off:'off')
+
+scanner-option = (@or set-delims:'@set-delims'
+                set-line-comment:'@set-line-comment'
+                set-comment-start:'@set-comment-start'
+                set-comment-end:'@set-comment-end'
+                set-operators:'@set-operators'
+                set-quotation-marks:'@set-quotation-marks'
+                set-regex-marks:'@set-regex-marks'
+                set-lisp-char:'@set-lisp-char'
+                set-number-regex:'@set-number-regex'
+                set-significant-whitespace:'@set-significant-whitespaces')
+
+parser-option = (@or case-sensitive:'@case-sensitive'
+                     split-word:'@split-word'
+					 left-recur-detection:'@left-recur-detection'
+					 use-memorized-parser:'@use-memorized-parser')
+
+#| === def === |#
+
+def-stm = variable '=' (@+ exp (@! '='))
+
+exp = (@or named-exp:named-exp
+           glob-exp:glob-exp
+		   op-exp:op-exp
+		   seq-exp:seq-exp
+		   any-exp:any-exp
+		   token-type-exp:token-type-exp
+		   dbg-exp:dbg-exp
+		   dbg-1exp:dbg-1exp
+		   word-exp:word
+		   regex-exp:regex
+		   var-exp:(variable (@! ':')))
+
+named-exp = variable ':' exp
+glob-exp = '~' exp
+op-exp = '(' cmb-op (@* exp) ')'
+seq-exp = '(' (@+ exp) ')'
+dbg-exp = '[' (@+ exp) ']'
+any-exp = '<' '*' '>'
+token-type-exp = '<' variable '>'
+dbg-1exp = '??' exp
+
+cmb-op = (@or plus-cmb:'@+'
+              star-cmb:'@*'
+			  join-cmb:'@,*'
+			  join-plus-cmb:'@,+'
+			  or-cmb:'@or'
+			  seq-cmb:'@..'
+			  not-cmb:'@!'
+			  maybe-cmb:'@?')
+
+word = <str>
+regex = <regex>
+variable = /[a-zA-Z_\-][a-zA-Z0-9_\-]*/

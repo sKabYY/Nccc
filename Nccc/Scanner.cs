@@ -21,6 +21,8 @@ namespace Nccc
         public string NumberRegex { get; set; }
         public string[] SignificantWhitespaces { get; set; }
 
+        public const string NumberPattern = "([+-]?\\d+(\\.\\d+)?([Ee]-?\\d+)?)";
+
         public Scanner()
         {
             // TODO: default all empty
@@ -34,7 +36,7 @@ namespace Nccc
             QuotationMarks = new string[] { "\"" };
             RegexMarks = new string[] { };
             LispChar = new string[] { "#\\", "?\\" };
-            NumberRegex = "([+-]?\\d+(\\.\\d+)?([Ee]-?\\d+)?)";
+            NumberRegex = NumberPattern;
             SignificantWhitespaces = new string[] { };
         }
 

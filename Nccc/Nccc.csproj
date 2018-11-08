@@ -48,5 +48,10 @@
     <Compile Include="SExp.cs" />
     <Compile Include="TextPosition.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="nccc.grammer" />
+    <None Include="Nccc.nuspec" />
+    <None Include="nuget-package.bat" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -15,15 +15,7 @@ namespace Nccc.Tests.Json
         public void TestSample()
         {
             var src = Utils.ReadFromAssembly("Nccc.Tests.Json.sample.json");
-            var parser = NcParser.LoadFromAssembly(Assembly.GetExecutingAssembly(), "Nccc.Tests.Json.json.grammer", p =>
-            {
-                p.Scanner.Delims = new string[] { "{", "}", "[", "]", ",", ":" };
-                p.Scanner.QuotationMarks = new string[] { "\"" };
-                p.Scanner.LineComment = new string[] { };
-                p.Scanner.CommentStart = null;
-                p.Scanner.CommentEnd = null;
-                p.Scanner.LispChar = new string[] { };
-            });
+            var parser = NcParser.LoadFromAssembly(Assembly.GetExecutingAssembly(), "Nccc.Tests.Json.json.grammer");
             var parseResult = parser.ScanAndParse(src);
             Console.WriteLine(parseResult.ToSExp().ToPrettyString());
             Assert.IsTrue(parseResult.IsSuccess());

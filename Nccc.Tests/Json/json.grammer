@@ -1,5 +1,15 @@
 ﻿:: json
 
+@set-delims '{' '}' '[' ']' ',' ':'
+@set-line-comment
+@set-comment-start
+@set-comment-end
+@set-operators
+@set-quotation-marks '"'
+@set-regex-marks
+@set-lisp-char
+@set-significant-whitespaces
+
 json = (@or array:array object:object value)
 
 array = '[' (@,* ',' json) ']'

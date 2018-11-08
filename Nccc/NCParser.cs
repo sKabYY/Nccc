@@ -11,6 +11,24 @@ namespace Nccc
 
     public class NcPGP: Parsec  // short for NcParserGeneratorParser
     {
+        public const string SET_DELIMS = "set-delims";
+        public const string SET_LINE_COMMENT = "set-line-comment";
+        public const string SET_COMMENT_START = "set-comment-start";
+        public const string SET_COMMENT_END = "set-comment-end";
+        public const string SET_OPERATORS = "set-operators";
+        public const string SET_QUOTATION_MARKS = "set-quotation-marks";
+        public const string SET_REGEX_MARKS = "set-regex-marks";
+        public const string SET_LISP_CHAR = "set-lisp-char";
+        public const string SET_NUMBER_REGEX = "set-number-regex";
+        public const string SET_SIGNIFICANT_WHITESPACES = "set-significant-whitespaces";
+        public const string CASE_SENSITIVE = "case-sensitive";
+        public const string SPLIT_WORD = "split-word";
+
+        public const string LEFT_RECUR_DETECTION = "left-recur-detection";
+        public const string USE_MEMORIZED_PARSER = "use-memorized-parser";
+        public const string OPTION_ON = "on";
+        public const string OPTION_OFF = "off";
+
         public const string PLUS_CMB = "plus-cmb";
         public const string STAR_CMB = "star-cmb";
         public const string JOIN_CMB = "join-cmb";
@@ -25,25 +43,63 @@ namespace Nccc
         public const string GLOB_EXP = "glob-exp";
         public const string OP_EXP = "op-exp";
         public const string SEQ_EXP = "seq-exp";
-        public const string TOKEN_TYPE_EXP = "token-type-exp";
         public const string ANY_EXP = "any-exp";
+        public const string TOKEN_TYPE_EXP = "token-type-exp";
         public const string DBG_EXP = "dbg-exp";
         public const string DBG_1EXP = "dbg-1exp";
         public const string WORD_EXP = "word-exp";
         public const string REGEX_EXP = "regex-exp";
         public const string VAR_EXP = "var-exp";
 
+        public const string SCANNER_OPTION_STM = "scanner-option-stm";
+        public const string PARSER_OPTION_STM = "parser-option-stm";
         public const string DEF_STM = "def-stm";
+
+        public const string OPTION_SECTION = "option-section";
+        public const string DEF_SECTION = "def-section";
+
         public const string DEF_ROOT = "def-root";
         public const string PROGRAM = "program";
 
+        public static void InitScanner(Scanner scanner)
+        {
+            scanner.Delims = new string[] { "(", ")", "[", "]", "{", "}", "<", ">", "`", "::", "=", ":", "~", "??" };
+            scanner.LineComment = new string[] { ";" };
+            scanner.CommentStart = "#|";
+            scanner.CommentEnd = "|#";
+            scanner.Operators = new string[] { };
+            scanner.QuotationMarks = new string[] { "'" };
+            scanner.RegexMarks = new string[] { "/" };
+            scanner.LispChar = new string[] { };
+            scanner.NumberRegex = Scanner.NumberPattern;
+            scanner.SignificantWhitespaces = new string[] { };
+        }
+
         public NcPGP()
         {
-            Scanner.Delims = new string[] { "(", ")", "[", "]", "{", "}", "<", ">", "`", "::", "=", ":", "~", "??" };
-            Scanner.QuotationMarks = new string[] { "'" };
-            Scanner.RegexMarks = new string[] { "/" };
-            Scanner.CommentStart = "#|";
-            Scanner.CommentEnd = "|#";
+            InitScanner(Scanner);
+
+            var scanner_option = CIfFail("unknown option", COr(
+                CIs(SET_DELIMS, PEq("@set-delims")),
+                CIs(SET_LINE_COMMENT, PEq("@set-line-comment")),
+                CIs(SET_COMMENT_START, PEq("@set-comment-start")),
+                CIs(SET_COMMENT_END, PEq("@set-comment-end")),
+                CIs(SET_OPERATORS, PEq("@set-operators")),
+                CIs(SET_QUOTATION_MARKS, PEq("@set-quotation-marks")),
+                CIs(SET_REGEX_MARKS, PEq("@set-regex-marks")),
+                CIs(SET_LISP_CHAR, PEq("@set-lisp-char")),
+                CIs(SET_NUMBER_REGEX, PEq("@set-number-regex")),
+                CIs(SET_SIGNIFICANT_WHITESPACES, PEq("@set-significant-whitespaces"))));
+
+            var parser_option = CIfFail("unknown option", COr(
+                CIs(CASE_SENSITIVE, PEq("@case-sensitive")),
+                CIs(SPLIT_WORD, PEq("@split-word")),
+                CIs(LEFT_RECUR_DETECTION, PEq("@left-recur-detection")),
+                CIs(USE_MEMORIZED_PARSER, PEq("@use-memorized-parser"))));
+
+            var on_or_off = COr(CIs(OPTION_ON, PEq("on")), CIs(OPTION_OFF, PEq("off")));
+            var scanner_option_stm = CIs(SCANNER_OPTION_STM, CSeq(scanner_option, CStar(PTokenType(TokenType.Str))));
+            var parser_option_stm = CIs(PARSER_OPTION_STM, CSeq(parser_option, on_or_off));
 
             var variablePattern = @"[a-zA-Z_\-][a-zA-Z0-9_\-]*";
 
@@ -87,9 +143,23 @@ namespace Nccc
             var def_stm = CIs(DEF_STM, CSeq(variable, eq, CPlus(exp, CNot(eq))));
             var root_stm = CIs(DEF_ROOT, CSeq(PEq("::"), variable));
 
-            RootParser = CIs(PROGRAM, CSeq(root_stm, CStar(def_stm)));
+            RootParser = CIs(PROGRAM, CSeq(
+                root_stm,
+                CIs(OPTION_SECTION, CStar(COr(scanner_option_stm, parser_option_stm))),
+                CIs(DEF_SECTION, CStar(def_stm))));
+        }
+
+        public static string GetNcGrammerSource()
+        {
+            var path = "Nccc.nccc.grammer";
+            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(path))
+            using (var reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd();
+            }
         }
     }
+
     public class NcParser: Parsec
     {
         public bool CaseSensitive { get; set; }
@@ -99,16 +169,41 @@ namespace Nccc
         {
             CaseSensitive = true;
             SplitWord = true;
-            init?.Invoke(this);
+            LeftRecurDetection = true;
+            UseMemorizedParser = true;
 
             var nodes = grammerAst.Children;
             var rootStm = nodes.First();
-            var defStms = nodes.Skip(1).ToList();
+            var optionStms = nodes[1].Children;
+            var defStms = nodes[2].Children;
             var rootName = rootStm.LeafValue();
+
+            foreach (var optionStm in optionStms)
+            {
+                Node.Match(optionStm, type =>
+                {
+                    type(NcPGP.SCANNER_OPTION_STM, es =>
+                    {
+                        var values = es.Skip(1).Select(e => e.Value).ToArray();
+                        _SetScannerOption(es.First(), values);
+                    });
+                    type(NcPGP.PARSER_OPTION_STM, es =>
+                    {
+                        var isOn = Node.Match<bool>(es[1], t =>
+                        {
+                            t(NcPGP.OPTION_ON, _ => true);
+                            t(NcPGP.OPTION_OFF, _ => false);
+                        });
+                        _SetParserOption(es.First(), isOn);
+                    });
+                });
+            }
+
+            init?.Invoke(this);
 
             foreach (var defStm in defStms)
             {
-                Node.Match(defStm, (type) =>
+                Node.Match(defStm, type =>
                 {
                     type(NcPGP.DEF_STM, es =>
                     {
@@ -119,6 +214,72 @@ namespace Nccc
                 });
             }
             RootParser = Get(rootName);
+        }
+
+        private string _GetAtMostOneValue(Node name, string[] values)
+        {
+            switch (values.Count())
+            {
+                case 0: return null;
+                case 1: return values.First();
+                default: throw new ParseException($"expect at most one value for {name.ToSExp().ToPrettyString()}");
+            }
+        }
+
+        private void _SetScannerOption(Node name, string[] values)
+        {
+            switch (name.Type)
+            {
+                case NcPGP.SET_DELIMS:
+                    Scanner.Delims = values;
+                    break;
+                case NcPGP.SET_LINE_COMMENT:
+                    Scanner.LineComment = values;
+                    break;
+                case NcPGP.SET_COMMENT_START:
+                    Scanner.CommentStart = _GetAtMostOneValue(name, values);
+                    break;
+                case NcPGP.SET_COMMENT_END:
+                    Scanner.CommentEnd = _GetAtMostOneValue(name, values);
+                    break;
+                case NcPGP.SET_OPERATORS:
+                    Scanner.Operators = values;
+                    break;
+                case NcPGP.SET_QUOTATION_MARKS:
+                    Scanner.QuotationMarks = values;
+                    break;
+                case NcPGP.SET_REGEX_MARKS:
+                    Scanner.RegexMarks = values;
+                    break;
+                case NcPGP.SET_LISP_CHAR:
+                    Scanner.LispChar = values;
+                    break;
+                case NcPGP.SET_NUMBER_REGEX:
+                    Scanner.NumberRegex = _GetAtMostOneValue(name, values);
+                    break;
+                case NcPGP.SET_SIGNIFICANT_WHITESPACES:
+                    Scanner.SignificantWhitespaces = values;
+                    break;
+            }
+        }
+
+        private void _SetParserOption(Node name, bool isOn)
+        {
+            switch (name.Type)
+            {
+                case NcPGP.CASE_SENSITIVE:
+                    CaseSensitive = isOn;
+                    break;
+                case NcPGP.SPLIT_WORD:
+                    SplitWord = isOn;
+                    break;
+                case NcPGP.LEFT_RECUR_DETECTION:
+                    LeftRecurDetection = isOn;
+                    break;
+                case NcPGP.USE_MEMORIZED_PARSER:
+                    UseMemorizedParser = isOn;
+                    break;
+            }
         }
 
         private IParser _ValueOf(Node exp)
@@ -181,7 +342,12 @@ namespace Nccc
             {
                 throw new ParseException($"parsing grammer failed: (message: {parseResult.Message}, rest: {parseResult.FailRest.ToString()})");
             }
-            return new NcParser(parseResult.Nodes[0], init);
+            return new NcParser(parseResult.Nodes.First(), init);
+        }
+
+        public static NcParser Load(Node grammerAst, Action<NcParser> init = null)
+        {
+            return new NcParser(grammerAst, init);
         }
 
         public static NcParser LoadFromAssembly(Assembly assembly, string path, Action<NcParser> init = null)
