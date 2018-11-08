@@ -11,6 +11,6 @@
     <description>a parser parser</description>
     <releaseNotes>a parser parser</releaseNotes>
     <copyright>Copyright 2018</copyright>
-    <tags>nccc</tags>
+    <tags>parsec PEG bootstrapping parser generator compiler AST</tags>
   </metadata>
 </package>
