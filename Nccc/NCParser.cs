@@ -186,41 +186,36 @@ namespace Nccc
             var defStms = nodes[2].Children;
             var rootName = rootStm.LeafValue();
 
-            foreach (var optionStm in optionStms)
+            Node.Match(optionStms, type =>
             {
-                Node.Match(optionStm, type =>
+                type(NcPGP.SCANNER_OPTION_STM, es =>
                 {
-                    type(NcPGP.SCANNER_OPTION_STM, es =>
-                    {
-                        var values = es.Skip(1).Select(e => e.Value).ToArray();
-                        _SetScannerOption(es.First(), values);
-                    });
-                    type(NcPGP.PARSER_OPTION_STM, es =>
-                    {
-                        var isOn = Node.Match<bool>(es[1], t =>
-                        {
-                            t(NcPGP.OPTION_ON, _ => true);
-                            t(NcPGP.OPTION_OFF, _ => false);
-                        });
-                        _SetParserOption(es.First(), isOn);
-                    });
+                    var values = es.Skip(1).Select(e => e.Value).ToArray();
+                    _SetScannerOption(es.First(), values);
                 });
-            }
+                type(NcPGP.PARSER_OPTION_STM, es =>
+                {
+                    var isOn = Node.Match<bool>(es[1], t =>
+                    {
+                        t(NcPGP.OPTION_ON, _ => true);
+                        t(NcPGP.OPTION_OFF, _ => false);
+                    });
+                    _SetParserOption(es.First(), isOn);
+                });
+            });
 
             init?.Invoke(this);
 
-            foreach (var defStm in defStms)
+            Node.Match(defStms, type =>
             {
-                Node.Match(defStm, type =>
+                type(NcPGP.DEF_STM, es =>
                 {
-                    type(NcPGP.DEF_STM, es =>
-                    {
-                        var name = es.First().Value;
-                        var ps = _ValueOf(es.Skip(1));
-                        DefParser(name, CSeq(ps));
-                    });
+                    var name = es.First().Value;
+                    var ps = _ValueOf(es.Skip(1));
+                    DefParser(name, CSeq(ps));
                 });
-            }
+            });
+
             RootParser = Get(rootName);
         }
 
