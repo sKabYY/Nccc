@@ -672,6 +672,14 @@ namespace Nccc
             if (!hit) throw new Exception($"match error: unknown type: {node.Type}");
         }
 
+        public static void Match(IList<Node> nodes, Action<Action<string, Action<IList<Node>>>> block)
+        {
+            foreach (var node in nodes)
+            {
+                Match(node, block);
+            }
+        }
+
         public static T Match<T>(Node node, Action<Action<string, Func<IList<Node>, T>>> block)
         {
             var value = default(T);

@@ -16,6 +16,22 @@ namespace Nccc
             Colnum = colnum;
         }
 
+        public TextPosition Back()
+        {
+            if (Offset == 0)
+            {
+                new InvalidOperationException("could not Back() when Offset==0");
+            }
+            if (Colnum == 1)
+            {
+                return new TextPosition(Offset - 1, Linenum - 1, 1);
+            }
+            else
+            {
+                return new TextPosition(Offset - 1, Linenum, Colnum - 1);
+            }
+        }
+
         public TextPosition Shift(string prefix)
         {
             if (string.IsNullOrEmpty(prefix)) return this;
