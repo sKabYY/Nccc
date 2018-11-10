@@ -617,7 +617,7 @@ namespace Nccc
         {
             if (Children == null || Children.Count != 1 || !Children.First().IsLeaf())
             {
-                throw new ParseException("can't get LeafValue of ??");  // TODO
+                throw new InvalidOperationException($"can't get LeafValue of node {ToSExp().ToPrettyString()}");
             }
             return Children.First().Value;
         }
@@ -651,49 +651,118 @@ namespace Nccc
             }
             else
             {
-                var info = $"{Type}[({Start.Linenum},{Start.Colnum})-({End.Linenum},{End.Colnum})]";
+                var info = $"{Type}[({Start?.Linenum},{Start?.Colnum})-({End?.Linenum},{End?.Colnum})]";
                 var lst = SExp.List(Children.Select(n => n.ToSExp()).ToArray());
                 lst.PushFront(info);
                 return lst;
             }
         }
 
-        public static void Match(Node node, Action<Action<string, Action<IList<Node>>>> block)
+        public void Match(Action<Action<string, Action<IList<Node>>>> block)
         {
             var hit = false;
             block((type, proc) =>
             {
-                if (node.Type == type)
+                if (Type == type)
                 {
-                    proc(node.Children);
+                    proc(Children);
                     hit = true;
                 }
             });
-            if (!hit) throw new Exception($"match error: unknown type: {node.Type}");
+            if (!hit) throw new Exception($"match error: unknown type: {Type}");
         }
 
         public static void Match(IList<Node> nodes, Action<Action<string, Action<IList<Node>>>> block)
         {
             foreach (var node in nodes)
             {
-                Match(node, block);
+                node.Match(block);
             }
         }
 
-        public static T Match<T>(Node node, Action<Action<string, Func<IList<Node>, T>>> block)
+        public T Match<T>(Action<Action<string, Func<IList<Node>, T>>> block)
         {
             var value = default(T);
             var hit = false;
             block((type, proc) =>
             {
-                if (node.Type == type)
+                if (Type == type)
                 {
-                    value = proc(node.Children);
+                    value = proc(Children);
                     hit = true;
                 }
             });
-            if (!hit) throw new Exception($"match error: unknown type: {node.Type}");
+            if (!hit) throw new Exception($"match error: unknown type: {Type}");
             return value;
+        }
+
+        public T DigSomething<T>(Func<Node, T> foundOne, Func<string, Node, T> notFound, Func<string, Node, T> foundMore, params string[] path)
+        {
+            var node = this;
+            for (var i = 0; i < path.Length; ++i)
+            {
+                if (node.IsLeaf())
+                {
+                    return notFound(path[i], node);
+                }
+                var found = node.Children.Where(n => n.Type == path[i]).ToArray();
+                switch (found.Length)
+                {
+                    case 0:
+                        return notFound(path[i], node);
+                    case 1:
+                        node = found.First();
+                        break;
+                    default:
+                        return foundMore(path[i], node);
+                }
+            }
+            return foundOne(node);
+        }
+
+        public Node DigNode(params string[] path)
+        {
+            return DigSomething(
+                node => node,
+                (type, node) => throw new InvalidOperationException($"type \"{type}\" not found in ${node.ToSExp().ToPrettyString()}"),
+                (type, node) => throw new InvalidOperationException($"two or more \"{type}\" found in ${node.ToSExp().ToPrettyString()}"),
+                path);
+        }
+
+        public string DigValue(params string[] path)
+        {
+            return DigNode(path).LeafValue();
+        }
+
+        public bool TryDigNode(out Node node, params string[] path)
+        {
+            Node nd = null;
+            var found = DigSomething(
+                n => { nd = n; return true; },
+                (type, n) => false,
+                (type, n) => false,
+                path);
+            node = nd;
+            return found;
+        }
+
+        public bool TryDigValue(out string value, params string[] path)
+        {
+            if (TryDigNode(out Node node, path))
+            {
+                value = node.LeafValue();
+                return true;
+            }
+            else
+            {
+                value = null;
+                return false;
+            }
+        }
+
+        public static string DigValue(IList<Node> nodes, params string[] path)
+        {
+            return new Node { Children = nodes }.DigValue(path);
         }
     }
 

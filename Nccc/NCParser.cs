@@ -195,7 +195,7 @@ namespace Nccc
                 });
                 type(NcPGP.PARSER_OPTION_STM, es =>
                 {
-                    var isOn = Node.Match<bool>(es[1], t =>
+                    var isOn = es[1].Match<bool>(t =>
                     {
                         t(NcPGP.OPTION_ON, _ => true);
                         t(NcPGP.OPTION_OFF, _ => false);
@@ -287,7 +287,7 @@ namespace Nccc
 
         private IParser _ValueOf(Node exp)
         {
-            return Node.Match<IParser>(exp, (type) =>
+            return exp.Match<IParser>(type =>
             {
                 type(NcPGP.NAMED_EXP, es => CIs(es.First().Value, _ValueOf(es[1])));
                 type(NcPGP.GLOB_EXP, es => CGlob(_ValueOf(es.First())));
@@ -325,7 +325,7 @@ namespace Nccc
 
         private IParser _ApplyOp(Node op, params IParser[] ps)
         {
-            return Node.Match<IParser>(op, (type) =>
+            return op.Match<IParser>(type =>
             {
                 type(NcPGP.PLUS_CMB, _ => CPlus(ps));
                 type(NcPGP.STAR_CMB, _ => CStar(ps));
