@@ -613,13 +613,27 @@ namespace Nccc
             return Children == null;
         }
 
-        public String LeafValue()
+        public string LeafValue()
         {
             if (Children == null || Children.Count != 1 || !Children.First().IsLeaf())
             {
                 throw new InvalidOperationException($"can't get LeafValue of node {ToSExp().ToPrettyString()}");
             }
             return Children.First().Value;
+        }
+
+        public string ConcatLeavesValue(string sep = " ")
+        {
+            if (Children == null)
+            {
+                return "";
+            }
+            return ConcatValue(Children, sep);
+        }
+
+        public static string ConcatValue(IList<Node> nodes, string sep = " ")
+        {
+            return string.Join(sep, nodes.Select(n => n.Value));
         }
 
         public static Node MakeLeaf(Token tok)
@@ -760,9 +774,14 @@ namespace Nccc
             }
         }
 
+        public static Node DigNode(IList<Node> nodes, params string[] path)
+        {
+            return new Node { Children = nodes }.DigNode(path);
+        }
+
         public static string DigValue(IList<Node> nodes, params string[] path)
         {
-            return new Node { Children = nodes }.DigValue(path);
+            return DigNode(nodes, path).LeafValue();
         }
     }
 
