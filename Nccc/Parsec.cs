@@ -483,7 +483,7 @@ namespace Nccc
 
         public ParseResult Deeper(ParseResult r)
         {
-            if (r == null || r.FailRest.Position().Offset < FailRest.Position().Offset)
+            if (r == null || r.FailRest.Position().Offset <= FailRest.Position().Offset)
             {
                 return this;
             }
@@ -782,6 +782,11 @@ namespace Nccc
         public static string DigValue(IList<Node> nodes, params string[] path)
         {
             return DigNode(nodes, path).LeafValue();
+        }
+
+        public static bool TryDigNode(IList<Node> nodes, out Node node, params string[] path)
+        {
+            return new Node { Children = nodes }.TryDigNode(out node, path);
         }
     }
 
