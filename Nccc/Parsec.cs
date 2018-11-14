@@ -355,6 +355,7 @@ namespace Nccc
         {
             return new ParseResult
             {
+                Success = true,
                 Nodes = nodes,
                 Rest = rest,
                 Message = message,
@@ -380,6 +381,7 @@ namespace Nccc
         {
             return new ParseResult
             {
+                Success = false,
                 Message = message,
                 Rest = rest,
                 FailRest = rest
@@ -430,7 +432,9 @@ namespace Nccc
             {
                 Parsec.Fatal("left-recursion detected", this, toks, stk);
             }
-            return _parse(toks, stk.Extend(this, toks));
+            var result = _parse(toks, stk.Extend(this, toks));
+            result.ParserName = _name;
+            return result;
         }
         public override string ToString()
         {
@@ -470,15 +474,17 @@ namespace Nccc
     public class ParseResult
     {
         public IList<Node> Nodes { get; set; }
+        public bool Success { get; set; }
         public BaseStream<Token> Rest { get; set; }
         public string Message { get; set; }
         public BaseStream<Token> FailRest { get; set; }
         public TextPosition Start { get; set; }
         public TextPosition End { get; set; }
+        public string ParserName { get; set; }
 
         public bool IsSuccess()
         {
-            return Nodes != null;
+            return Nodes != null && Success;
         }
 
         public ParseResult Deeper(ParseResult r)
@@ -497,7 +503,8 @@ namespace Nccc
         {
             return new ParseResult
             {
-                Nodes = null,
+                Success = false,
+                // Nodes = Nodes,  TODO: try to return the longest result
                 Rest = Rest,
                 Message = Message,
                 FailRest = FailRest,
@@ -508,12 +515,17 @@ namespace Nccc
 
         public SExp ToSExp()
         {
-            return SExp.List(
+            var list = SExp.List(
                 SExp.List("success?", IsSuccess()),
                 SExp.List("nodes", SExp.List(Nodes?.Select(n => n.ToSExp()).ToArray())),
                 SExp.List("rest", Rest),
                 SExp.List("message", Message),
                 SExp.List("fail_rest", FailRest));
+            if (!string.IsNullOrEmpty(ParserName))
+            {
+                list.PushFront(SExp.List(SExp.List("parser", ParserName)));
+            }
+            return list;
         }
     }
 
