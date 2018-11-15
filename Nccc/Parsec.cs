@@ -68,7 +68,7 @@ namespace Nccc
                 parser = _MakeMemorizedParser(parser);
             }
             _EnvSet(name, parser);
-            return parser;
+            return Get(name);
         }
 
         protected IParser Get(string name)
@@ -99,6 +99,7 @@ namespace Nccc
                     if (!r.IsSuccess())
                     {
                         failResult = deepest.FailResult();
+                        results.Add(failResult);
                         break;
                     }
                     toks = r.Rest;
@@ -106,7 +107,7 @@ namespace Nccc
                 }
                 var message = deepest?.Message;
                 var failRest = deepest?.FailRest;
-                return failResult ?? _MergeResults(results, toks, message, failRest);
+                return _MergeResults(results, toks, message, failRest);
             });
         }
 
@@ -353,9 +354,15 @@ namespace Nccc
         private ParseResult _OutputNodes(IList<Node> nodes, BaseStream<Token> rest,
             TextPosition start, TextPosition end, string message = null, BaseStream<Token> failRest= null)
         {
+            return _OutputNodes(true, nodes, rest, start, end, message, failRest);
+        }
+
+        private ParseResult _OutputNodes(bool success, IList<Node> nodes, BaseStream<Token> rest,
+            TextPosition start, TextPosition end, string message = null, BaseStream<Token> failRest= null)
+        {
             return new ParseResult
             {
-                Success = true,
+                Success = success,
                 Nodes = nodes,
                 Rest = rest,
                 Message = message,
@@ -388,18 +395,24 @@ namespace Nccc
             };
         }
 
+        // Assert results[0...-1] succeed
         private ParseResult _MergeResults(IList<ParseResult> results, BaseStream<Token> rest, string message, BaseStream<Token> failRest)
         {
-            var nodes = results.SelectMany(r => r.Nodes).ToList();
-            if (message == null && results.Count > 1)
+            var nodes = results.Where(r => r.IsSuccess()).SelectMany(r => r.Nodes).ToList();
+            var success = true;
+            if (results.Count >= 1)
             {
                 var lastR = results.Last();
-                message = lastR.Message;
-                failRest = lastR.FailRest;
+                if (message == null)
+                {
+                    message = lastR.Message;
+                    failRest = lastR.FailRest;
+                }
+                success = lastR.IsSuccess();
             }
             var startIdx = results.Count == 0 ? rest.Position() : results.First().Start;
             var endIdx = results.Count == 0 ? rest.Position() : results.Last().End;
-            return _OutputNodes(nodes, rest, startIdx, endIdx, message, failRest);
+            return _OutputNodes(success, nodes, rest, startIdx, endIdx, message, failRest);
         }
 
         public static void Fatal(string message, IParser parser, BaseStream<Token> toks, IParseStack stk)
@@ -504,7 +517,7 @@ namespace Nccc
             return new ParseResult
             {
                 Success = false,
-                // Nodes = Nodes,  TODO: try to return the longest result
+                Nodes = Nodes,
                 Rest = Rest,
                 Message = Message,
                 FailRest = FailRest,
@@ -515,12 +528,23 @@ namespace Nccc
 
         public SExp ToSExp()
         {
-            var list = SExp.List(
-                SExp.List("success?", IsSuccess()),
-                SExp.List("nodes", SExp.List(Nodes?.Select(n => n.ToSExp()).ToArray())),
-                SExp.List("rest", Rest),
-                SExp.List("message", Message),
-                SExp.List("fail_rest", FailRest));
+            var list = SExp.List(SExp.List("success?", IsSuccess()));
+            if (IsSuccess())
+            {
+                list.Push(
+                    SExp.List("nodes", SExp.List(Nodes?.Select(n => n.ToSExp()).ToArray())),
+                    SExp.List("rest", Rest),
+                    SExp.List("message", Message),
+                    SExp.List("fail_rest", FailRest));
+            }
+            else
+            {
+                list.Push(
+                    SExp.List("message", Message),
+                    SExp.List("fail_rest", FailRest),
+                    SExp.List("nodes", SExp.List(Nodes?.Select(n => n.ToSExp()).ToArray())),
+                    SExp.List("rest", Rest));
+            }
             if (!string.IsNullOrEmpty(ParserName))
             {
                 list.PushFront(SExp.List(SExp.List("parser", ParserName)));

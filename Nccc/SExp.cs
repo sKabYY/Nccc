@@ -35,9 +35,12 @@ namespace Nccc
             _sexps = os.Select(EnsureSExp).ToList();
         }
 
-        public void Push(object o)
+        public void Push(params object[] os)
         {
-            _sexps.Add(EnsureSExp(o));
+            foreach (var o in os)
+            {
+                _sexps.Add(EnsureSExp(o));
+            }
         }
 
         public void PushFront(object o)

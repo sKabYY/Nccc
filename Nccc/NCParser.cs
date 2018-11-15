@@ -146,10 +146,10 @@ namespace Nccc
             var def_stm = CIs(DEF_STM, CSeq(variable, eq, CPlus(exp, CNot(eq))));
             var root_stm = CIs(DEF_ROOT, CSeq(PEq("::"), variable));
 
-            RootParser = CIs(PROGRAM, CSeq(
+            RootParser = DefParser(PROGRAM, CIs(PROGRAM, CSeq(
                 root_stm,
                 CIs(OPTION_SECTION, CStar(COr(scanner_option_stm, parser_option_stm))),
-                CIs(DEF_SECTION, CStar(def_stm))));
+                CIs(DEF_SECTION, CStar(def_stm)))));
         }
 
         public static string ReadStringFromAssembly(Assembly assembly, string path)

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Reflection;
 using System.IO;
+using System.Linq;
 
 namespace Nccc.Tests.SQL
 {
@@ -11,6 +12,7 @@ namespace Nccc.Tests.SQL
     public class SQLTests
     {
         private readonly string _sql = Utils.ReadFromAssembly("Nccc.Tests.SQL.sample.sql");
+        private readonly string _errSql = Utils.ReadFromAssembly("Nccc.Tests.SQL.sample-err.sql");
 
         private static NcParser _GetSqlParser()
         {
@@ -34,6 +36,17 @@ namespace Nccc.Tests.SQL
             var parseResult = parser.ScanAndParse(_sql);
             Console.WriteLine(parseResult.ToSExp().ToPrettyString());
             Assert.IsTrue(parseResult.IsSuccess());
+        }
+
+        [TestMethod]
+        public void TestErr()
+        {
+            var parser = _GetSqlParser();
+            var parseResult = parser.ScanAndParse(_errSql);
+            Console.WriteLine(parseResult.ToSExp().ToPrettyString());
+            Node.DigNode(parseResult.Nodes, "create_table");
+            Assert.IsTrue(parseResult.Nodes.Count(n => n.Type == "comment") > 0);
+            Assert.IsFalse(parseResult.IsSuccess());
         }
 
         [TestMethod]
