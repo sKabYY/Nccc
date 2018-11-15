@@ -542,8 +542,8 @@ namespace Nccc
                 list.Push(
                     SExp.List("message", Message),
                     SExp.List("fail_rest", FailRest),
-                    SExp.List("nodes", SExp.List(Nodes?.Select(n => n.ToSExp()).ToArray())),
-                    SExp.List("rest", Rest));
+                    SExp.List("rest", Rest),
+                    SExp.List("nodes", SExp.List(Nodes?.Select(n => n.ToSExp()).ToArray())));
             }
             if (!string.IsNullOrEmpty(ParserName))
             {
@@ -653,7 +653,7 @@ namespace Nccc
         {
             if (Children == null || Children.Count != 1 || !Children.First().IsLeaf())
             {
-                throw new InvalidOperationException($"can't get LeafValue of node {ToSExp().ToPrettyString()}");
+                throw new NodeMethodException(this, $"can't get LeafValue of node {ToSExp().ToPrettyString()}");
             }
             return Children.First().Value;
         }
@@ -719,7 +719,7 @@ namespace Nccc
                     hit = true;
                 }
             });
-            if (!hit) throw new Exception($"match error: unknown type: {Type}");
+            if (!hit) throw new NodeMethodException(this, $"match error: unknown type \"{Type}\" for node {ToSExp().ToPrettyString()}");
         }
 
         public static void Match(IList<Node> nodes, Action<Action<string, Action<IList<Node>>>> block)
@@ -742,7 +742,7 @@ namespace Nccc
                     hit = true;
                 }
             });
-            if (!hit) throw new Exception($"match error: unknown type: {Type}");
+            if (!hit) throw new NodeMethodException(this, $"match error: unknown type \"{Type}\" for node {ToSExp().ToPrettyString()}");
             return value;
         }
 
@@ -774,8 +774,8 @@ namespace Nccc
         {
             return DigSomething(
                 node => node,
-                (type, node) => throw new InvalidOperationException($"type \"{type}\" not found in ${node.ToSExp().ToPrettyString()}"),
-                (type, node) => throw new InvalidOperationException($"two or more \"{type}\" found in ${node.ToSExp().ToPrettyString()}"),
+                (type, node) => throw new NodeMethodException(this, $"type \"{type}\" not found in ${node.ToSExp().ToPrettyString()}"),
+                (type, node) => throw new NodeMethodException(this, $"two or more \"{type}\" found in ${node.ToSExp().ToPrettyString()}"),
                 path);
         }
 
@@ -829,5 +829,14 @@ namespace Nccc
     public class ParseException: Exception
     {
         public ParseException(string message) : base(message) { }
+    }
+
+    public class NodeMethodException: Exception
+    {
+        public Node Node { get; set; }
+        public NodeMethodException(Node node, string message) : base(message)
+        {
+            Node = node;
+        }
     }
 }
