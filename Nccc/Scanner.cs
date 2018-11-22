@@ -35,7 +35,7 @@ namespace Nccc
             Operators = new string[] { };
             QuotationMarks = new string[] { "\"" };
             RegexMarks = new string[] { };
-            LispChar = new string[] { "#\\", "?\\" };
+            LispChar = new string[] { };
             NumberRegex = NumberPattern;
             SignificantWhitespaces = new string[] { };
         }

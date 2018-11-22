@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bootstrapping\BootstrappingTests.cs" />
+    <Compile Include="Calculator\Calculator.cs" />
     <Compile Include="Json\JsonTests.cs" />
     <Compile Include="ScannerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -62,6 +63,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Json\json.grammer" />
     <EmbeddedResource Include="Json\sample.json" />
+    <EmbeddedResource Include="Calculator\calculator.grammer" />
     <None Include="packages.config" />
     <EmbeddedResource Include="SQL\sql.grammer" />
   </ItemGroup>
