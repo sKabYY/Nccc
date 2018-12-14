@@ -1,0 +1,20 @@
+﻿:: add
+
+@set-delims '(' ')' '[' ']' '{' '}' '+' '-' '*' '/' '^'
+
+add = (@or add:(mul '+' add)
+           sub:(mul'-' add)
+           mul)
+
+mul = (@or mul:(pow '*' mul)
+           div:(pow '/' mul)
+           pow)
+
+pow = (@or pow:(primary '^' pow)
+           primary)
+
+primary = (@or par:('(' add ')')
+               par:('[' add ']')
+               par:('{' add '}')
+               neg:('-' pow)
+               num:<number>)
