@@ -11,6 +11,15 @@ namespace Nccc.Tests.Calculator
     [TestClass]
     public class Calculator
     {
+        private NcParser _parser = NcParser.LoadFromAssembly(Assembly.GetExecutingAssembly(), "Nccc.Tests.Calculator.calculator.grammer");
+
+        [TestMethod]
+        public void TestParser()
+        {
+            var pr = _parser.ScanAndParse("(5.1+2)*3+-2^3^2");
+            Console.WriteLine(pr.ToSExp().ToPrettyString());
+        }
+
         [TestMethod]
         public void Test()
         {
@@ -22,8 +31,7 @@ namespace Nccc.Tests.Calculator
 
         private double _Calc(string exp)
         {
-            var parser = NcParser.LoadFromAssembly(Assembly.GetExecutingAssembly(), "Nccc.Tests.Calculator.calculator.grammer");
-            var pr = parser.ScanAndParse(exp);
+            var pr = _parser.ScanAndParse(exp);
             if (!pr.IsSuccess())
             {
                 throw new ArgumentException($"Parsing fail: {pr.ToSExp().ToPrettyString()}");
