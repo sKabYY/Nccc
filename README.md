@@ -93,10 +93,10 @@ Grammer文件大部分采用了S表达式的语法。
 
 ### Options
 
-@left-recur-detection on|off
-左递归检测，会稍微影响性能，但是能排除
+`@left-recur-detection on|off`
+左递归检测，会稍微影响性能，但是能避免左递归导致的死循环
 
-@use-memorized-parser on|off
+`@use-memorized-parser on|off`
 中间结果缓存，能稍微改善Or操作的性能
 
 ### Basic Parser
