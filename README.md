@@ -121,7 +121,7 @@ variable = (@err'invalid var' /[a-zA-Z_\-][a-zA-Z0-9_\-]*/)
 
 `(@+ p1 p2 p3 ...)`：一个或多个
 
-`(@* p1 p2 p3 ...)`：一个或零个
+`(@* p1 p2 p3 ...)`：零个或多个
 
 `(@,+ sep p1 p2 p3 ...)`：以`sep`隔开的token序列
 
