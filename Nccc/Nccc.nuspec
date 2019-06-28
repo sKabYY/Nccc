@@ -2,10 +2,11 @@
 <package >
   <metadata>
     <id>Nccc</id>
-    <version>0.4.0</version>
+    <version>0.4.1</version>
     <title>Nccc</title>
     <authors>sKabYY</authors>
     <owners>sKabYY</owners>
+    <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
     <projectUrl>https://github.com/sKabYY/Nccc</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>a parser parser</description>
