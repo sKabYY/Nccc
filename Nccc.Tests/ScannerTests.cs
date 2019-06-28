@@ -28,5 +28,29 @@ namespace Nccc.Tests
             var numNotComment = toks.Where(tok => !tok.StartsWith("<Token type=Comment")).Count();
             Assert.AreEqual(toksWithoutComment.Count, numNotComment);
         }
+
+        [TestMethod]
+        public void Locale()
+        {
+            var s = "(define /*)";
+            Console.WriteLine($"Scan: {s}");
+            var scanner = new Scanner
+            {
+                CommentStart = "/*",
+                CommentEnd = "*/"
+            };
+            scanner.SetLanguage("zh-cn");
+            try
+            {
+                var stream = scanner.Scan(s);
+                var toks = stream.ToList().Select(t => t.ToString()).ToList();
+                Console.WriteLine($"[{string.Join(", ", toks)}]");
+                throw new AssertFailedException("expect a ScanException");
+            }
+            catch (ScanException ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
     }
 }

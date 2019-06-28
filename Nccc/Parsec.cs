@@ -9,11 +9,19 @@ namespace Nccc
 {
     public class Parsec
     {
+
         public Scanner Scanner { get; set; } = new Scanner();
         protected IParser RootParser { get; set; }
         private readonly IDictionary<string, IParser> _env = new Dictionary<string, IParser>();
         public bool LeftRecurDetection { get; set; } = true;
         public bool UseMemorizedParser { get; set; } = true;
+
+        public Locale _ { get; } = new Locale();
+        public void SetLanguage(string lang)
+        {
+            _.Language = lang;
+            Scanner.SetLanguage(lang);
+        }
 
         public ParseResult ScanAndParse(string src)
         {
@@ -34,7 +42,7 @@ namespace Nccc
                 {
                     return new ParseResult
                     {
-                        Message = "expect <<EOF>>",
+                        Message = _.L("expect <<EOF>>"),
                         Rest = r.Rest,
                         FailRest = r.FailRest
                     };
@@ -175,7 +183,7 @@ namespace Nccc
 
         protected IParser PEq(string s, bool caseSensitive = true)
         {
-            var p = PTokenPred($"expect \"{s}\"", tok =>
+            var p = PTokenPred($"{_.L("expect")} \"{s}\"", tok =>
             {
                 if (!tok.IsToken()) return false;
                 if (caseSensitive)
@@ -196,7 +204,7 @@ namespace Nccc
             if (!pattern.StartsWith("^")) pattern = "^" + pattern;
             if (!pattern.EndsWith("$")) pattern = pattern + "$";
             var regex = new Regex(pattern);
-            return PTokenPred(failMessage ?? $"not match regex /{origPattern}/", tok =>
+            return PTokenPred(failMessage ?? $"${_.L("not match regex")} /{origPattern}/", tok =>
             {
                 if (!tok.IsToken()) return false;
                 return regex.IsMatch(tok.Text);
@@ -210,7 +218,7 @@ namespace Nccc
 
         protected IParser PTokenType(string type)
         {
-            return PTokenPred($"expect <{type}>", tok =>
+            return PTokenPred($"{_.L("expect")} <{type}>", tok =>
             {
                 return tok.Type.ToString().ToLower() == type;
             });
@@ -230,7 +238,7 @@ namespace Nccc
             {
                 if (toks.IsEof())
                 {
-                    return _OutputFail("ANY fail: reach eof", toks);
+                    return _OutputFail($"ANY fail: {_.L("reach eof")}", toks);
                 }
                 return _OutputNode(Node.MakeLeaf(toks.Car()), toks.Cdr());
             });
@@ -343,7 +351,7 @@ namespace Nccc
             {
                 return p;
             }
-            throw new ParseException($"\"{name}\" is undefined");
+            throw new ParseException($"\"{name}\" {_.L("is undefined")}");
         }
 
         private void _EnvSet(string name, IParser p)

@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Locale.cs" />
     <Compile Include="NcParser.cs" />
     <Compile Include="Parsec.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

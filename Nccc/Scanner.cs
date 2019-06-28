@@ -23,6 +23,12 @@ namespace Nccc
 
         public const string NumberPattern = "([+-]?\\d+(\\.\\d+)?([Ee]-?\\d+)?)";
 
+        public Locale _ { get; } = new Locale();
+        public void SetLanguage(string lang)
+        {
+            _.Language = lang;
+        }
+
         public Scanner()
         {
             // TODO: default all empty
@@ -139,7 +145,7 @@ namespace Nccc
             if (mr != null)
             {
                 var end = _FindNext(str, mr.End, CommentEnd);
-                if (end == null) throw new ScanException("block comment match error", start, start.ShiftToEnd(str));
+                if (end == null) throw new ScanException(_.L("block comment match error"), start, start.ShiftToEnd(str));
                 end = end.Shift(CommentEnd);
                 return Token.MakeComment(str.Substring(start.Offset, end.Offset - start.Offset), start, end);
             }
@@ -172,7 +178,7 @@ namespace Nccc
                 //var matchData = Regex.Match(str.Substring(start.Offset), $"{mark}(\\\\{mark}|[^{mark}])*{mark}");
                 if (!matchData.Success)
                 {
-                    throw new ScanException("string match error", start, start.ShiftToEnd(str));
+                    throw new ScanException(_.L("string match error"), start, start.ShiftToEnd(str));
                 }
                 var matchText = matchData.Value;
                 var text = matchText.Substring(mark.Length, matchText.Length - 2 * mark.Length)
@@ -190,7 +196,7 @@ namespace Nccc
                 var matchData = _MatchFrom(str, start, $"{mark}(\\\\{mark}|[^{mark}])*{mark}");
                 if (!matchData.Success)
                 {
-                    throw new ScanException("string match error", start, start.ShiftToEnd(str));
+                    throw new ScanException(_.L("regex match error"), start, start.ShiftToEnd(str));
                 }
                 var matchText = matchData.Value;
                 var text = matchText.Substring(mark.Length, matchText.Length - 2 * mark.Length).Replace($"\\{mark}", mark);
@@ -498,7 +504,7 @@ namespace Nccc
         }
     }
 
-    class ScanException: Exception
+    public class ScanException: Exception
     {
         public TextPosition Start { get; set; }
         public TextPosition End { get; set; }
