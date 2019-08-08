@@ -10,14 +10,14 @@ namespace Nccc
     public class Parsec
     {
 
-        public Scanner Scanner { get; set; } = new Scanner();
+        protected Scanner Scanner { get; set; } = new Scanner();
         protected IParser RootParser { get; set; }
         private readonly IDictionary<string, IParser> _env = new Dictionary<string, IParser>();
-        public bool LeftRecurDetection { get; set; } = true;
-        public bool UseMemorizedParser { get; set; } = true;
+        protected bool LeftRecurDetection { get; set; } = true;
+        protected bool UseMemorizedParser { get; set; } = true;
 
-        public Locale _ { get; } = new Locale();
-        public void SetLanguage(string lang)
+        private Locale _ { get; } = new Locale();
+        protected void SetLanguage(string lang)
         {
             _.Language = lang;
             Scanner.SetLanguage(lang);

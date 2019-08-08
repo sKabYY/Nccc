@@ -170,10 +170,43 @@ namespace Nccc
 
     public class NcParser: Parsec
     {
-        public bool CaseSensitive { get; set; }
-        public bool SplitWord { get; set; }
+        private bool CaseSensitive;
+        private bool SplitWord;
 
-        private NcParser(Node grammerAst, Action<NcParser> init)
+        public class Settings
+        {
+            private readonly NcParser _parser;
+            public Settings(NcParser p)
+            {
+                _parser = p;
+            }
+            public string Language
+            {
+                set => _parser.SetLanguage(value);
+            }
+
+            public Scanner Scanner => _parser.Scanner;
+
+            public bool CaseSensitive
+            {
+                set => _parser.CaseSensitive = value;
+            }
+
+            public bool SplitWord
+            {
+                set => _parser.SplitWord = value;
+            }
+            public bool LeftRecurDetection
+            {
+                set => _parser.LeftRecurDetection = value;
+            }
+            public bool UseMemorizedParser
+            {
+                set => _parser.UseMemorizedParser = value;
+            }
+        }
+
+        private NcParser(Node grammerAst, Action<Settings> init)
         {
             CaseSensitive = true;
             SplitWord = true;
@@ -204,7 +237,7 @@ namespace Nccc
                 });
             });
 
-            init?.Invoke(this);
+            init?.Invoke(new Settings(this));
 
             Node.Match(defStms, type =>
             {
@@ -338,7 +371,7 @@ namespace Nccc
             });
         }
 
-        public static NcParser Load(string src, Action<NcParser> init = null)
+        public static NcParser Load(string src, Action<Settings> init = null)
         {
             var pgp = new NcPGP();
             var parseResult = pgp.ScanAndParse(src);
@@ -349,12 +382,12 @@ namespace Nccc
             return new NcParser(parseResult.Nodes.First(), init);
         }
 
-        public static NcParser Load(Node grammerAst, Action<NcParser> init = null)
+        public static NcParser Load(Node grammerAst, Action<Settings> init = null)
         {
             return new NcParser(grammerAst, init);
         }
 
-        public static NcParser LoadFromAssembly(Assembly assembly, string path, Action<NcParser> init = null)
+        public static NcParser LoadFromAssembly(Assembly assembly, string path, Action<Settings> init = null)
         {
             var src = NcPGP.ReadStringFromAssembly(assembly, path);
             return Load(src, init);

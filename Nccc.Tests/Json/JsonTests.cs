@@ -20,5 +20,18 @@ namespace Nccc.Tests.Json
             Console.WriteLine(parseResult.ToSExp().ToPrettyString());
             Assert.IsTrue(parseResult.IsSuccess());
         }
+
+        [TestMethod]
+        public void TestError()
+        {
+            var src = "[1,2,3";
+            var parser = NcParser.LoadFromAssembly(Assembly.GetExecutingAssembly(), "Nccc.Tests.Json.json.grammer", settings =>
+            {
+                settings.Language = "zh-cn";
+            });
+            var parseResult = parser.ScanAndParse(src);
+            Console.WriteLine(parseResult.ToSExp().ToPrettyString());
+            Assert.IsFalse(parseResult.IsSuccess());
+        }
     }
 }

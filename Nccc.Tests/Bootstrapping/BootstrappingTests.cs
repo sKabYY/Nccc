@@ -10,7 +10,7 @@ namespace Nccc.Tests.Bootstrapping
     [TestClass]
     public class BootstrappingTests
     {
-        private static NcParser _P2P(NcParser ncParser, string grammer, Action<NcParser> init = null)
+        private static NcParser _P2P(NcParser ncParser, string grammer, Action<NcParser.Settings> init = null)
         {
             var ast = ncParser.ScanAndParse(grammer).Nodes.First();
             return NcParser.Load(ast, init);

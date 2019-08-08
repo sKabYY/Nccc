@@ -17,15 +17,15 @@ namespace Nccc.Tests.SQL
         private static NcParser _GetSqlParser()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            return NcParser.LoadFromAssembly(assembly, "Nccc.Tests.SQL.sql.grammer", p =>
+            return NcParser.LoadFromAssembly(assembly, "Nccc.Tests.SQL.sql.grammer", settings =>
             {
-                p.CaseSensitive = false;
-                p.Scanner.Delims = new string[] { "(", ")", "[", "]", "{", "}", ",", ".", ";" };
-                p.Scanner.QuotationMarks = new string[] { "\'" };
-                p.Scanner.LineComment = new string[] { "--" };
-                p.Scanner.CommentStart = "/*";
-                p.Scanner.CommentEnd = "*/";
-                p.Scanner.LispChar = new string[] { };
+                settings.CaseSensitive = false;
+                settings.Scanner.Delims = new string[] { "(", ")", "[", "]", "{", "}", ",", ".", ";" };
+                settings.Scanner.QuotationMarks = new string[] { "\'" };
+                settings.Scanner.LineComment = new string[] { "--" };
+                settings.Scanner.CommentStart = "/*";
+                settings.Scanner.CommentEnd = "*/";
+                settings.Scanner.LispChar = new string[] { };
             });
         }
 
