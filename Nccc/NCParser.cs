@@ -29,6 +29,9 @@ namespace Nccc
         public const string OPTION_ON = "on";
         public const string OPTION_OFF = "off";
 
+        public const string SET_MESSAGE_LOCALE_START = "set-message-locale-start";
+        public const string SET_MESSAGE_LOCALE_END = "set-message-locale-end";
+
         public const string PLUS_CMB = "plus-cmb";
         public const string STAR_CMB = "star-cmb";
         public const string JOIN_CMB = "join-cmb";
@@ -54,6 +57,7 @@ namespace Nccc
 
         public const string SCANNER_OPTION_STM = "scanner-option-stm";
         public const string PARSER_OPTION_STM = "parser-option-stm";
+        public const string LOCALE_OPTION_STM = "locale-option-stm";
         public const string DEF_STM = "def-stm";
 
         public const string OPTION_SECTION = "option-section";
@@ -80,7 +84,7 @@ namespace Nccc
         {
             InitScanner(Scanner);
 
-            var scanner_option = CIfFail("unknown option", COr(
+            var scanner_option = CIfFail("unknown scanner option", COr(
                 CIs(SET_DELIMS, PEq("@set-delims")),
                 CIs(SET_LINE_COMMENT, PEq("@set-line-comment")),
                 CIs(SET_COMMENT_START, PEq("@set-comment-start")),
@@ -92,15 +96,20 @@ namespace Nccc
                 CIs(SET_NUMBER_REGEX, PEq("@set-number-regex")),
                 CIs(SET_SIGNIFICANT_WHITESPACES, PEq("@set-significant-whitespaces"))));
 
-            var parser_option = CIfFail("unknown option", COr(
+            var parser_option = CIfFail("unknown parser option", COr(
                 CIs(CASE_SENSITIVE, PEq("@case-sensitive")),
                 CIs(SPLIT_WORD, PEq("@split-word")),
                 CIs(LEFT_RECUR_DETECTION, PEq("@left-recur-detection")),
                 CIs(USE_MEMORIZED_PARSER, PEq("@use-memorized-parser"))));
 
+            var locale_option = CIfFail("unknown locale option", COr(
+                CIs(SET_MESSAGE_LOCALE_START, PEq("@set-message-locale-start")),
+                CIs(SET_MESSAGE_LOCALE_END, PEq("@set-message-locale-end"))));
+
             var on_or_off = COr(CIs(OPTION_ON, PEq("on")), CIs(OPTION_OFF, PEq("off")));
             var scanner_option_stm = CIs(SCANNER_OPTION_STM, CSeq(scanner_option, CStar(PTokenType(TokenType.Str))));
             var parser_option_stm = CIs(PARSER_OPTION_STM, CSeq(parser_option, on_or_off));
+            var locale_option_stm = CIs(LOCALE_OPTION_STM, CSeq(locale_option, CMaybe(PTokenType(TokenType.Str))));
 
             var variablePattern = @"[a-zA-Z_\-][a-zA-Z0-9_\-]*";
 
@@ -148,7 +157,7 @@ namespace Nccc
 
             RootParser = DefParser(PROGRAM, CIs(PROGRAM, CSeq(
                 root_stm,
-                CIs(OPTION_SECTION, CStar(COr(scanner_option_stm, parser_option_stm))),
+                CIs(OPTION_SECTION, CStar(COr(scanner_option_stm, parser_option_stm, locale_option_stm))),
                 CIs(DEF_SECTION, CStar(def_stm)))));
         }
 
@@ -180,10 +189,8 @@ namespace Nccc
             {
                 _parser = p;
             }
-            public string Language
-            {
-                set => _parser.SetLanguage(value);
-            }
+
+            public Locale Locale => _parser._;
 
             public Scanner Scanner => _parser.Scanner;
 
@@ -234,6 +241,11 @@ namespace Nccc
                         t(NcPGP.OPTION_OFF, _ => false);
                     });
                     _SetParserOption(es.First(), isOn);
+                });
+                type(NcPGP.LOCALE_OPTION_STM, es =>
+                {
+                    var values = es.Skip(1).Select(e => e.Value).ToArray();
+                    _SetLocaleOption(es.First(), values);
                 });
             });
 
@@ -314,6 +326,19 @@ namespace Nccc
                     break;
                 case NcPGP.USE_MEMORIZED_PARSER:
                     UseMemorizedParser = isOn;
+                    break;
+            }
+        }
+
+        private void _SetLocaleOption(Node name, string[] values)
+        {
+            switch (name.Type)
+            {
+                case NcPGP.SET_MESSAGE_LOCALE_START:
+                    MessageLocaleStart = _GetAtMostOneValue(name, values);
+                    break;
+                case NcPGP.SET_MESSAGE_LOCALE_END:
+                    MessageLocaleEnd = _GetAtMostOneValue(name, values);
                     break;
             }
         }

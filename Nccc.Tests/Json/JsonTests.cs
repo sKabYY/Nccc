@@ -24,14 +24,20 @@ namespace Nccc.Tests.Json
         [TestMethod]
         public void TestError()
         {
+            var expectMessage = "哈哈";
             var src = "[1,2,3";
             var parser = NcParser.LoadFromAssembly(Assembly.GetExecutingAssembly(), "Nccc.Tests.Json.json.grammer", settings =>
             {
-                settings.Language = "zh-cn";
+                settings.Locale.Language = "zh-cn";
+                settings.Locale.Set("zh-cn", new Dictionary<string, string>
+                {
+                    { "expect", expectMessage }
+                });
             });
             var parseResult = parser.ScanAndParse(src);
             Console.WriteLine(parseResult.ToSExp().ToPrettyString());
             Assert.IsFalse(parseResult.IsSuccess());
+            Assert.IsTrue(parseResult.Message.Contains(expectMessage));
         }
     }
 }

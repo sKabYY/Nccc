@@ -9,6 +9,8 @@
 @set-regex-marks
 @set-lisp-char
 @set-significant-whitespaces
+@set-message-locale-start 'L{'
+@set-message-locale-end '}'
 
 json = (@or array:array object:object value)
 
@@ -16,7 +18,8 @@ array = '[' (@,* ',' json) ']'
 
 object = '{' (@,* ',' pair:(key:<str> ':' value:json)) '}'
 
-value = (@or string:<str>
-             number:<number>
-			 bool:/true|false/
-			 null:'null')
+value = (@err'L{invalid value type}'
+             (@or string:<str>
+                  number:<number>
+			      bool:/true|false/
+			      null:'null'))

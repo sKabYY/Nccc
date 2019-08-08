@@ -23,13 +23,13 @@ namespace Nccc
 
         public const string NumberPattern = "([+-]?\\d+(\\.\\d+)?([Ee]-?\\d+)?)";
 
-        public Locale _ { get; } = new Locale();
+        public Locale _ { get; }
         public void SetLanguage(string lang)
         {
             _.Language = lang;
         }
 
-        public Scanner()
+        public Scanner(Locale locale = null)
         {
             // TODO: default all empty
             // s-expression settings by default
@@ -44,6 +44,7 @@ namespace Nccc
             LispChar = new string[] { };
             NumberRegex = NumberPattern;
             SignificantWhitespaces = new string[] { };
+            _ = locale ?? new Locale();
         }
 
         public TokenStream Scan(string str)
@@ -175,7 +176,6 @@ namespace Nccc
             {
                 var mark = mr.Text;
                 var matchData = _MatchFrom(str, start, $"{mark}(\\\\{mark}|[^{mark}])*{mark}");
-                //var matchData = Regex.Match(str.Substring(start.Offset), $"{mark}(\\\\{mark}|[^{mark}])*{mark}");
                 if (!matchData.Success)
                 {
                     throw new ScanException(_.L("string match error"), start, start.ShiftToEnd(str));

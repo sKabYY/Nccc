@@ -21,7 +21,8 @@
 
 program = program:(def-root:def-root
                    option-section:(@* (@or scanner-option-stm:scanner-option-stm
-				                           parser-option-stm:parser-option-stm))
+				                           parser-option-stm:parser-option-stm
+										   locale-option-stm:locale-option-stm))
 				   def-section:(@* def-stm:def-stm))
 
 #| === root === |#
@@ -32,8 +33,9 @@ def-root = '::' variable
 
 scanner-option-stm = scanner-option (@* <str>)
 parser-option-stm = parser-option (@or on:'on' off:'off')
+locale-option-stm = locale-option (@? <str>)
 
-scanner-option = (@err'unknown option'
+scanner-option = (@err'unknown scanner option'
                       (@or set-delims:'@set-delims'
                            set-line-comment:'@set-line-comment'
                            set-comment-start:'@set-comment-start'
@@ -45,11 +47,15 @@ scanner-option = (@err'unknown option'
                            set-number-regex:'@set-number-regex'
                            set-significant-whitespaces:'@set-significant-whitespaces'))
 
-parser-option = (@err'unknown option'
+parser-option = (@err'unknown parser option'
                      (@or case-sensitive:'@case-sensitive'
                           split-word:'@split-word'
 					      left-recur-detection:'@left-recur-detection'
 					      use-memorized-parser:'@use-memorized-parser'))
+
+locale-option = (@err'unknown locale option'
+                     (@or set-message-locale-start:'@set-message-locale-start'
+					      set-message-locale-end:'@set-message-locale-end'))
 
 #| === def === |#
 

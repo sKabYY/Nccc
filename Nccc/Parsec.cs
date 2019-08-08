@@ -9,18 +9,19 @@ namespace Nccc
 {
     public class Parsec
     {
-
-        protected Scanner Scanner { get; set; } = new Scanner();
-        protected IParser RootParser { get; set; }
-        private readonly IDictionary<string, IParser> _env = new Dictionary<string, IParser>();
+        protected Locale _ { get; }
+        protected Scanner Scanner { get; }
         protected bool LeftRecurDetection { get; set; } = true;
         protected bool UseMemorizedParser { get; set; } = true;
+        protected string MessageLocaleStart { get; set; } = null;
+        protected string MessageLocaleEnd { get; set; } = null;
+        protected IParser RootParser { get; set; }
+        private readonly IDictionary<string, IParser> _env = new Dictionary<string, IParser>();
 
-        private Locale _ { get; } = new Locale();
-        protected void SetLanguage(string lang)
+        protected Parsec()
         {
-            _.Language = lang;
-            Scanner.SetLanguage(lang);
+            _ = new Locale();
+            Scanner = new Scanner(_);
         }
 
         public ParseResult ScanAndParse(string src)
@@ -397,7 +398,7 @@ namespace Nccc
             return new ParseResult
             {
                 Success = false,
-                Message = message,
+                Message = _MessageLocaleString(message),
                 Rest = rest,
                 FailRest = rest
             };
@@ -429,6 +430,23 @@ namespace Nccc
                 $"parser: {parser.ToString()}\n" +
                 $"rest: {toks.ToString()}\n" +
                 $"stack trace: {stk.ToSExp().ToPrettyString()}");
+        }
+
+        private string _MessageLocaleString(string s)
+        {
+            if (string.IsNullOrEmpty(MessageLocaleStart) || string.IsNullOrEmpty(MessageLocaleEnd))
+            {
+                return s;
+            }
+            var pattern = $"{MessageLocaleStart}([^{MessageLocaleEnd}])*{MessageLocaleEnd}";
+            var mc = Regex.Matches(s, pattern);
+            var items = mc.Cast<Match>().Select(m => m.Value).Distinct().ToList();
+            foreach (var item in items)
+            {
+                var key = item.Substring(MessageLocaleStart.Length, item.Length - MessageLocaleStart.Length - MessageLocaleEnd.Length);
+                s = s.Replace(item, _.L(key));
+            }
+            return s;
         }
     }
 

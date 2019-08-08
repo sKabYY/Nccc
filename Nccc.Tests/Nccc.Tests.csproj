@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="Bootstrapping\BootstrappingTests.cs" />
     <Compile Include="Calculator\Calculator.cs" />
+    <Compile Include="ErrsTests.cs" />
     <Compile Include="Json\JsonTests.cs" />
     <Compile Include="ScannerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
