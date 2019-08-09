@@ -9,7 +9,7 @@ Parsec的意思是Parser Combinators。其思想是基于一些基础parser，�
 比如匹配字符串`A`的parser（记为`'A'`），匹配一个数字的parser（记为`<number>`）等。
 
 Parser组合子类似正则表达式中的操作符。
-比如讲parser串成序列的序列操作`@..`，或操作`@or`，星号操作（零个或多个）`@*`。
+比如将parser串成序列的序列操作`@..`，或操作`@or`，星号操作（零个或多个）`@*`。
 
 使用基础parser和组合子可以合成较为复杂的parser：
 
@@ -26,7 +26,7 @@ Parser组合子类似正则表达式中的操作符。
 语法：
 
 ```
-; 定义add为root parser
+; 定义add为root parser，即最后得到的parser
 :: add
 
 ; 设置参数
@@ -65,7 +65,7 @@ var pr = _parser.ScanAndParse("(5.1+2)*3+-2^3^2");
 Console.WriteLine(pr.ToSExp().ToPrettyString());
 ```
 
-输出Parsing结果：
+输出Parsing结果（打印成S表达式）：
 
 ```
 (((parser add))
@@ -88,7 +88,7 @@ Console.WriteLine(pr.ToSExp().ToPrettyString());
 
 # ParseResult Type
 
-所以parser（root parser或者中间的parser）分析的结果类型是`ParseResult`。`ParseResult`主要提供两个信息：
+所有parser（root parser或者中间的parser）分析的结果类型是`ParseResult`。`ParseResult`主要提供三个信息：
 
 1. 分析是否成功
 
@@ -98,23 +98,43 @@ Console.WriteLine(pr.ToSExp().ToPrettyString());
 
 2. 抽象语法数（AST）
 
-`ParseResult`的属性如下：
+    一个parser会返回AST的根节点Node的列表，这个列表可能包含一个或多个Node，也可能为空。
+
+	Node主要属性有1) 节点类型`Type`，2) 节点值`Value`和3) 子节点列表`Children`。
+
+	操作符`@..`、`@*`等组合的parser会拼接被操作parser返回的Node列表，产生多个Node的结果。
+
+	操作符`{name}:`组合的parser则会返回一个`Type`属性值为`{name}`的节点、其子节点为被操作parser返回的Node列表。
+
+	注意，分析成功也可能会返回空列表。比如解析关键字parser（一般是字符串匹配parser）。
+	
+	另外，操作符`~`可以“吞掉”被操作parser成功返回的AST。
+
+3. 剩余的Token流
+
+	parser需要返回剩余的Token，以供后续的parser继续分析。
+	
+	有一些特殊的parser不会消耗Token。比如`@!`操作符组合的parser仅做检查，不消耗Token。
+
+	对于root parser，剩余的Token流应该只有Eof。
+
+**`ParseResult`的属性具体说明如下**：
 
 ## Nodes
 
-Node的List。 一个Node即一个AST。
-在语法分析没有出错的情况下，分析的结果包含Node的List。
+Node的列表。 一个Node即一个AST的根节点。
+在语法分析没有出错的情况下，分析的结果包含Node的列表。
 
 对于一个完整的语法分析来说，最终返回的Node个数一般是1个。
-之所以使用List，是因为中间结果经常会有多个AST。例如`@..`、`@*`等。
-并且在分析过程中，需要对中间结果做List拼接操作。
+之所以使用列表，是因为中间结果经常会有一个parser返回多个Node的情况。例如使用操作符`@..`或操作符`@*`组合的parser。
+并且在分析过程中，需要对中间结果做列表拼接操作。
 
 Node的结构为：
 
-* Type：节点类型。类型由带名称的parser定义。
-* Value：节点值。只有叶子节点才会有值。
-* Children：子节点列表。
-* Start & End：节点在文本中的起止位置。
+* `Type`：节点类型。类型由带名称的parser定义。
+* `Value`：节点值。只有叶子节点才会有值。
+* `Children`：子节点列表。
+* `Start` & `End`：节点在文本中的起止位置。
 
 ## Success
 
@@ -122,9 +142,9 @@ Node的结构为：
 
 ## Message & Rest & FailRest
 
-* Message：分析结果错误信息。由于有些parser是依赖错误进行的（比如`@*`、`@or`等），所以分析成功的Result里，Message也可能是有值的。对于成功的结果，忽略Message即可。
-* Rest：剩下的未分析的tokens。如果分析成功，Rest里应该只有Eof。
-* FailRest：最后一次分析错误的位置。
+* `Message`：分析结果错误信息。由于有些parser是依赖错误进行的（比如`@*`、`@or`等），所以分析成功的结果里，`Message`也可能是有值的。对于成功的结果，忽略`Message`即可。
+* `Rest`：剩下的未分析的Tokens。如果分析成功，Rest里应该只有Eof。
+* `FailRest`：最后一次分析错误的位置。同`Message`，分析成功的结果里`FailRest`也可能包含多于Eof的内容。
 
 ## Start & End
 
@@ -132,17 +152,35 @@ Node的结构为：
 
 ## ParserName
 
-分析这个结果的Parser名称，对于没有名称的Parser，这个值为`Null`
+分析这个结果的parser名称，对于没有名称的parser，这个值为`Null`。
 
-# Grammer Overview
+# Grammer的写法
 
 Grammer文件大部分采用了S表达式的语法。
 
-## Scanner
+Grammer文件分为三个部分（必须按顺序写）：
 
-Token类型（TODO)
+1. Root parser的声明：`::{parser}`，声明`{parser}`为root parser。`{parser}`的定义写在第三部分。
+2. 参数配置[可选]：词法分析参数和语法分析参数。
+3. 各个parser的定义：使用基础parser和组合子来定义各种复杂parser。
 
-词法分析参数（TODO）：
+## 词法分析
+
+不同于大部分教程使用正则表达式的技术实现的词法分析，Nccc直接硬编码实现，因此只能生成固定的几种Token（但也够用）。
+
+后续可能会使用字符级别的语法分析替代词法分析。
+
+### Token类型：
+
+* Eof：结束标记。
+* Comment：注释。
+* Newline：换行。设置了`@set-significant-whitespace`才会生成这个类型的Token
+* Regex：正则。
+* Str：字符串。
+* Number：数字。
+* Token：其他类型，一般是关键字、操作符等。
+
+### 词法分析参数（TODO）：
 
 ```
 ; 分隔符列表。词法分析器遇到这些符号生成一个词。
@@ -169,16 +207,19 @@ Token类型（TODO)
 ; 预留参数，暂未用到
 @set-lisp-char
 
+; 匹配数字类型的正则表达式
+@set-number-regex  '([+-]?\\d+(\\.\\d+)?([Ee]-?\\d+)?)'
+
 ; 重要的空白符。默认情况下空白符会被忽略，除非在这里设置。例如换行符`'\n'`。
 @set-significant-whitespaces
 
 ```
 
-## Parser
+## 语法分析
 
 一个Parser可以是一个只做一个简单匹配的基础parser，或者是由若干个parser组合而成的组合parser。
 
-### Parser参数
+### 语法分析参数
 
 `@case-sensitive on|off`
 大小写敏感。默认on
@@ -192,17 +233,9 @@ Token类型（TODO)
 `@use-memorized-parser on|off`
 中间结果缓存，能稍微改善@or操作的性能。默认on
 
-### 基础parser
+### 定义parser
 
-`'string'`：匹配值为`string`的Token。若成功，返回空
-
-`/regex/`：匹配值正则匹配`regex`的Token
-
-`<type>`：匹配类型为`type`的Token
-
-`<*>`：匹配所有Token
-
-### Variable
+`{variable} = parser`：定义变量`{variable}`为parser。
 
 变量由大小写字母、数字、下划线和横杠组成，并且不能以数字开头。
 
@@ -210,21 +243,37 @@ Token类型（TODO)
 variable = (@err'invalid var' /[a-zA-Z_\-][a-zA-Z0-9_\-]*/)
 ```
 
-### Combinator
+变量定义是可递归的，即引用可写在前面，定义写在后面。重复定义会产生不确定的行为。
 
-`(@.. p1 p2 p3 ...)`或直接放括号里`(p1 p2 p3 ...)`：按顺序parse
+> 变量定义能力比想象中的重要。可递归的变量定义是语法生成式匹配能力超过正则表达式的根本原因。
 
-`(@+ p1 p2 p3 ...)`：一个或多个
+### 基础parser
 
-`(@* p1 p2 p3 ...)`：零个或多个
+`'{string}'`：匹配值为`{string}`的Token。返回空。
 
-`(@,+ sep p1 p2 p3 ...)`：以`sep`隔开的token序列
+`/{regex}/`：匹配值正则匹配`{regex}`的Token，返回具有Token值的叶子节点。
 
-`(@,* sep p1 p2 p3 ...)`：匹配空或者以`sep`隔开的token序列
+`<type>`：匹配类型为`type`的Token，返回具有Token值的叶子节点。
 
-`(@or p1 p2 p3 ...)`：匹配第一个成功parse的parser
+`<*>`：匹配所有Token，返回具有Token值的叶子节点
 
-`(@! p1 p2 p3 ...)`：Not操作。若能被`(p1 p2 p3 ...)`成功parse，则失败；否则返回空
+### 组合子
+
+`(@.. p1 p2 p3 ...)`或直接放括号里`(p1 p2 p3 ...)`：按顺序匹配，拼接返回结果（下面没特殊说明的默认都是拼接返回结果）
+
+`(@+ p1 p2 p3 ...)`：一个或多个`(p1 p2 p3 ...)`
+
+`(@* p1 p2 p3 ...)`：零个或多个`(p1 p2 p3 ...)`
+
+`(@,+ sep p1 p2 p3 ...)`：以`sep`隔开的匹配`(p1 p2 p3 ...)`的序列
+
+比如`(@,+ ',' 'A' <number>)`匹配`A 1.1 , A 2`。
+
+`(@,* sep p1 p2 p3 ...)`：匹配空或者以`sep`隔开的匹配`(p1 p2 p3 ...)`的序列
+
+`(@or p1 p2 p3 ...)`：匹配第一个成功匹配的结果
+
+`(@! p1 p2 p3 ...)`：Not操作。若`(p1 p2 p3 ...)`分析成功，则匹配失败；否则匹配成功，返回空并且不消耗任何Token
 
 `(@? p1 p2 p3 ...)`：匹配空或者`(p1 p2 p3 ...)`
 
@@ -232,11 +281,13 @@ variable = (@err'invalid var' /[a-zA-Z_\-][a-zA-Z0-9_\-]*/)
 
 ### Named
 
-`name:parser`：带名称的parser，匹配成功时增加一个type为`name`的节点
+`{name}:parser`：带名称的parser，匹配成功时增加一个Type为`{name}`的节点。
+
+只有这个操作会使AST增长一层。
 
 ### Error
 
-`(@err'string' p1 p2 p3 ...)`：匹配`(p1 p2 p3 ...)`。若失败，错误信息为`string`
+`(@err'string' p1 p2 p3 ...)`：自定义错误信息。匹配`(p1 p2 p3 ...)`。若失败，错误信息为`string`
 
 ### Debug
 

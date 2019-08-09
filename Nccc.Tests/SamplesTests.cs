@@ -14,6 +14,7 @@ namespace Nccc.Tests
         {
             var parser = NcParser.Load(grammer);
             var result = parser.ScanAndParse(source);
+            Console.WriteLine($"source: \"{source}\"");
             Console.WriteLine(result.ToSExp().ToPrettyString());
             Assert.IsTrue(result.IsSuccess());
         }
