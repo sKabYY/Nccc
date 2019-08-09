@@ -1,7 +1,7 @@
 # Nccc
 > .Net Compiler Compiler Combinator
 
-一个简单易用的语法生成器。采用Parsec的编程方式实现。语法生成式的设计参考了PEG的思想，但基本上采用的S表达式的结构。
+一个简单易用的语法生成器。采用Parsec的编程方式实现。语法生成式的设计参考了[王垠的设计](http://www.yinwang.org/blog-cn/2013/04/21/ydiff-%E7%BB%93%E6%9E%84%E5%8C%96%E7%9A%84%E7%A8%8B%E5%BA%8F%E6%AF%94%E8%BE%83)和PEG的思想，基本上采用的S表达式的结构。
 
 Parsec的意思是Parser Combinators。其思想是基于一些基础parser，使用parser组合子组合成复杂的parser。
 
@@ -21,7 +21,7 @@ Parser组合子类似正则表达式中的操作符。
 * `(@or 'A' <number>)`匹配由'A'或者一个数字。如`A`、`1.1`。
 * `(@* (@or 'A' <number>))`匹配由'A'和数字组成的序列。如`A A`、`1.1 2`、`A 23`、`A 1.2 A A`。
 
-# 一个完整的例子： 算术表达式
+# 一个例子： 算术表达式
 
 语法：
 
@@ -118,9 +118,9 @@ Console.WriteLine(pr.ToSExp().ToPrettyString());
 
 	对于root parser，剩余的Token流应该只有Eof。
 
-**`ParseResult`的属性具体说明如下**：
+## `ParseResult`的属性具体说明
 
-## Nodes
+### Nodes
 
 Node的列表。 一个Node即一个AST的根节点。
 在语法分析没有出错的情况下，分析的结果包含Node的列表。
@@ -136,21 +136,21 @@ Node的结构为：
 * `Children`：子节点列表。
 * `Start` & `End`：节点在文本中的起止位置。
 
-## Success
+### Success
 
 分析结果是否成功。
 
-## Message & Rest & FailRest
+### Message & Rest & FailRest
 
 * `Message`：分析结果错误信息。由于有些parser是依赖错误进行的（比如`@*`、`@or`等），所以分析成功的结果里，`Message`也可能是有值的。对于成功的结果，忽略`Message`即可。
 * `Rest`：剩下的未分析的Tokens。如果分析成功，Rest里应该只有Eof。
 * `FailRest`：最后一次分析错误的位置。同`Message`，分析成功的结果里`FailRest`也可能包含多于Eof的内容。
 
-## Start & End
+### Start & End
 
 分析结果在文本中的起止位置
 
-## ParserName
+### ParserName
 
 分析这个结果的parser名称，对于没有名称的parser，这个值为`Null`。
 
