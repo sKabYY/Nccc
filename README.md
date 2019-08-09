@@ -414,9 +414,12 @@ var value = Node.DigValue(pr.Nodes, "add", "neg", "pow", "num");
 Assert.AreEqual("2", value);
 ```
 
+# 国际化
+
+TODO
 
 # 自举
 
-<Nccc/nccc.grammer>描述了Grammer文件的语法。
+[Nccc/nccc.grammer](Nccc/nccc.grammer)描述了Grammer文件的语法。
 
-<Nccc.Tests/Bootstrapping/BootstrappingTests.cs>里面的测试用例用上面的Grammer文件的语法生成了自己……
+[Nccc.Tests/Bootstrapping/BootstrappingTests.cs](Nccc.Tests/Bootstrapping/BootstrappingTests.cs)里面的测试用例用上面的Grammer文件的语法生成了自己……
