@@ -1,5 +1,5 @@
 # Nccc
-.Net Compiler Compiler Combinator
+> .Net Compiler Compiler Combinator
 
 一个简单易用的语法生成器。采用Parsec的编程方式实现。语法生成式的设计参考了PEG的思想，但基本上采用的S表达式的结构。
 
@@ -13,7 +13,7 @@ Parser组合子类似正则表达式中的操作符。
 
 使用基础parser和组合子可以合成较为复杂的parser：
 
-* `(@.. 'A' 'B')`匹配字符串`A`和字符串`B`序列。如`A B`、`A     B`。
+* `(@.. 'A' 'B')`匹配字符串`A`和字符串`B`序列。如`A B`。
 * `(@or 'A' 'B')`匹配字符串`A`或字符串`B`。
 * `(@? 'A')`匹配空或者字符串`A`。
 * `(@* 'A')`匹配零个或多个`A`。如`A`、`A A A A`。
@@ -26,9 +26,13 @@ Parser组合子类似正则表达式中的操作符。
 语法：
 
 ```
+; 定义add为root parser
 :: add
 
+; 设置参数
 @set-delims '(' ')' '[' ']' '{' '}' '+' '-' '*' '/' '^'
+
+; 下面开始组合
 
 add = (@or add:(mul '+' add)
            sub:(mul'-' add)
