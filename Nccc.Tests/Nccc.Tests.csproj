@@ -55,6 +55,7 @@
     <Compile Include="Calculator\Calculator.cs" />
     <Compile Include="ErrsTests.cs" />
     <Compile Include="Json\JsonTests.cs" />
+    <Compile Include="SamplesTests.cs" />
     <Compile Include="ScannerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SExpTests.cs" />
