@@ -86,9 +86,19 @@ Console.WriteLine(pr.ToSExp().ToPrettyString());
        (num[(1,16)-(1,17)] 2)))))))
 ```
 
-# Result Type
+# ParseResult Type
 
-一个parser（跟parser或者中间的parser）分析的结果类型是`ParseResult`，其属性如下：
+所以parser（root parser或者中间的parser）分析的结果类型是`ParseResult`。`ParseResult`主要提供两个信息：
+
+1. 分析是否成功
+
+    分析失败也是有意义的。即使最终分析是成功的，中间的parser也可能会有多次分析失败。
+    
+    比如`@or`操作符要尝试多个parser直至分析成功，`@*`操作符则要重复解析一个文本直到解析失败。
+
+2. 抽象语法数（AST）
+
+`ParseResult`的属性如下：
 
 ## Nodes
 
