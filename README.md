@@ -299,12 +299,124 @@ variable = (@err'invalid var' /[a-zA-Z_\-][a-zA-Z0-9_\-]*/)
 
 `[p1 p2 p3 ...]`：打印`(p1 p2 p3 ...)`的parse结果
 
-# Travel AST
+# 遍历/访问AST
 
-`Node.Match`
+直接访问Node的属性非常不方便，Nccc提供了一些方便的方法来帮助获取Node中的数据。
 
-`DigValue`
+## Match方法
 
-`DigNode`
+### Node的Match方法
 
-TODO
+Match方法会根据`node`的类型执行响应的操作：
+```
+node.Match(type =>
+{
+	type(类型1, nodes => stm1 with nodes);
+	type(类型2, nodes => stm2 with nodes);
+	type(类型3, nodes => stm3 with nodes);
+	...
+});
+```
+
+### 静态Match方法
+
+静态Match方法遍历多个Node：
+```
+Node.Match<T>(ns, type =>
+{
+	type(类型1, nodes => stm1 with nodes);
+	type(类型2, nodes => stm1 with nodes);
+	type(类型3, nodes => stm1 with nodes);
+	...
+});  // returns value with type T
+```
+
+相当于
+```
+foreach (var n in ns)
+{
+	n.Match(type =>
+	{
+		type(类型1, nodes => stm1 with nodes);
+		type(类型2, nodes => stm1 with nodes);
+		type(类型3, nodes => stm1 with nodes);
+		...
+	});
+}
+```
+
+### 带返回值的Match方法
+
+```
+node.Match<T>(type =>
+{
+	type(类型1, nodes => exp1(type T) with nodes);
+	type(类型2, nodes => exp2(type T) with nodes);
+	type(类型3, nodes => exp3(type T) with nodes);
+	...
+});  // returns value with type T
+```
+
+### 还是计算器的例子
+
+使用Match方法实现计算器的解释器：
+
+```
+private double _Calc(string exp)
+{
+    var pr = _parser.ScanAndParse(exp);
+    if (!pr.IsSuccess())
+    {
+        throw new ArgumentException($"Parsing fail: {pr.ToSExp().ToPrettyString()}");
+    }
+    return _ValueOf(pr.Nodes.First());
+}
+
+private double _ValueOf(Node node)
+{
+    return node.Match<double>(type =>
+    {
+        type("par", es => _ValueOf(es[0]));
+        type("add", es => _ValueOf(es[0]) + _ValueOf(es[1]));
+        type("sub", es => _ValueOf(es[0]) - _ValueOf(es[1]));
+        type("mul", es => _ValueOf(es[0]) * _ValueOf(es[1]));
+        type("div", es => _ValueOf(es[0]) / _ValueOf(es[1]));
+        type("pow", es => Math.Pow(_ValueOf(es[0]), _ValueOf(es[1])));
+        type("neg", es => -_ValueOf(es[0]));
+        type("num", es => double.Parse(es[0].Value));
+    });
+}
+
+[TestMethod]
+public void TestCalc()
+{
+    var x = _Calc("(5.1+2)*3+-2^3^2");
+    var x0 = (5.1 + 2) * 3 - Math.Pow(2, Math.Pow(3, 2));
+    Console.WriteLine(x);
+    Assert.AreEqual(x0, x);
+}
+```
+
+## Dig方法
+
+Dig方法用于按照路径从AST取特定的Node或者值。路径必须指定到唯一一个节点。
+
+`Node.DigNode`：返回路径指定的节点
+
+`Node.DigValue`：如果路径指定的节点是叶子节点，则返回叶子节点的值；如果路径指定的节点只包含一个叶子节点，返回该叶子节点的值；其他情况报错。
+
+仍然是计算器的例子，从语法分析的结果中取节点/值：
+```
+var pr = _parser.ScanAndParse("(5.1+2)*3+-2^3^2");
+var node = Node.DigNode(pr.Nodes, "add", "mul");
+Assert.AreEqual("mul", node.Type);
+var value = Node.DigValue(pr.Nodes, "add", "neg", "pow", "num");
+Assert.AreEqual("2", value);
+```
+
+
+# 自举
+
+<Nccc/nccc.grammer>描述了Grammer文件的语法。
+
+<Nccc.Tests/Bootstrapping/BootstrappingTests.cs>里面的测试用例用上面的Grammer文件的语法生成了自己……
