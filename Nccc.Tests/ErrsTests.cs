@@ -26,7 +26,7 @@ root = (@err'L{expect} A L{or} B' oo:(@or 'A' 'B'))
                 settings.Locale.Language = "zh-cn";
                 settings.Locale.Set("zh-cn", new Dictionary<string, string>
                 {
-                    { "expect", "应为" },
+                    { "expect", "盼望着" },
                     { "or", "或" },
                 });
             });
@@ -34,7 +34,7 @@ root = (@err'L{expect} A L{or} B' oo:(@or 'A' 'B'))
             var result = parser.ScanAndParse(source);
             Console.WriteLine(result.ToSExp().ToPrettyString());
             Assert.IsFalse(result.IsSuccess());
-            Assert.AreEqual("应为 A 或 B", result.Message);
+            Assert.AreEqual("盼望着 A 或 B", result.Message);
         }
     }
 }

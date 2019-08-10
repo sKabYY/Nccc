@@ -1,5 +1,6 @@
 # Nccc
 > .Net Compiler Compiler Combinator
+> Make Making Parser Easy
 
 一个简单易用的语法生成器。采用Parsec的编程方式实现。语法生成式的设计参考了[王垠的设计](http://www.yinwang.org/blog-cn/2013/04/21/ydiff-%E7%BB%93%E6%9E%84%E5%8C%96%E7%9A%84%E7%A8%8B%E5%BA%8F%E6%AF%94%E8%BE%83)和PEG的思想，基本上采用的S表达式的结构。
 
@@ -161,8 +162,13 @@ Grammer文件大部分采用了S表达式的语法。
 Grammer文件分为三个部分（必须按顺序写）：
 
 1. Root parser的声明：`::{parser}`，声明`{parser}`为root parser。`{parser}`的定义写在第三部分。
-2. 参数配置[可选]：词法分析参数和语法分析参数。
+2. 参数配置[可选]：词法分析参数、语法分析参数和国际化参数。
 3. 各个parser的定义：使用基础parser和组合子来定义各种复杂parser。
+
+## Grammer文件中的注释
+
+* 单行注释：';'
+* 块注释：'#|'开始，'|#'结束
 
 ## 词法分析
 
@@ -299,6 +305,76 @@ variable = (@err'invalid var' /[a-zA-Z_\-][a-zA-Z0-9_\-]*/)
 
 `[p1 p2 p3 ...]`：打印`(p1 p2 p3 ...)`的parse结果
 
+## 加载grammer
+
+`NcParser.Load`方法使用字符串加载grammer：
+
+```
+var parser = NcParser.Load("::root\nroot = 'A'");
+```
+
+另外也提供了从嵌入的资源文件加载grammer的方法：
+
+```
+var parser = NcParser.LoadFromAssembly(Assembly.GetExecutingAssembly(), "Nccc.Tests.Calculator.calculator.grammer");
+```
+
+## 国际化
+
+语言需要在加载grammer的时候在初始化方法里指定：
+
+```
+var parser = NcParser.LoadFromAssembly(Assembly.GetExecutingAssembly(), "Nccc.Tests.Json.json.grammer", settings =>
+{
+    settings.Locale.Language = "zh-cn";
+});
+```
+
+Nccc默认配置了`"zh-cn"`语言的内置错误信息。如果需要自定义国际化字符串，可在初始化方法中设置：
+
+```
+settings.Locale.Language = "zh-cn";
+settings.Locale.Set("zh-cn", new Dictionary<string, string>
+{
+    { "expect", "盼望着" }
+});
+```
+
+自定义错误信息默认不做国际化处理。
+若需要国际化自定义错误信息，需要使用国际化参数`@set-message-locale-start`和`@set-message-locale-end`来指明`@err`操作符自定义的错误信息中需要国际化的字符串。
+
+例如：
+
+```
+public const string grammer = @"
+:: root
+
+; 'L{'和'}'包围的字符串会被国际化
+@set-message-locale-start 'L{'
+@set-message-locale-end '}'
+
+root = (@err'L{expect} A L{or} B' oo:(@or 'A' 'B'))
+";
+[TestMethod]
+public void TestMessageLocale()
+{
+    var parser = NcParser.Load(grammer, settings =>
+    {
+        settings.Locale.Language = "zh-cn";
+        settings.Locale.Set("zh-cn", new Dictionary<string, string>
+        {
+            { "expect", "盼望着" },
+            { "or", "或" },
+        });
+    });
+    var source = "C";
+    var result = parser.ScanAndParse(source);
+    Console.WriteLine(result.ToSExp().ToPrettyString());
+    Assert.IsFalse(result.IsSuccess());
+    Assert.AreEqual("盼望着 A 或 B", result.Message);
+}
+```
+
 # 遍历/访问AST
 
 直接访问Node的属性非常不方便，Nccc提供了一些方便的方法来帮助获取Node中的数据。
@@ -414,9 +490,6 @@ var value = Node.DigValue(pr.Nodes, "add", "neg", "pow", "num");
 Assert.AreEqual("2", value);
 ```
 
-# 国际化
-
-TODO
 
 # 自举
 
