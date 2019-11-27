@@ -117,7 +117,7 @@ namespace Nccc
             return new Regex($"^{pattern}").Match(str, start.Offset, str.Length - start.Offset);
         }
 
-        public Token Scan1(String str, TextPosition start)
+        public Token Scan1(string str, TextPosition start)
         {
             _MatchResult mr;
             do
