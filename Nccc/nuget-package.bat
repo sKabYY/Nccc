@@ -1,2 +1,2 @@
-@"../tools/nuget.exe" pack Nccc.csproj -Prop Configuration=Release
+dotnet pack -c Release
 %comspec%
