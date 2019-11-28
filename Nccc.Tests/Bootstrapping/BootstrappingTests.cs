@@ -51,25 +51,36 @@ namespace Nccc.Tests.Bootstrapping
             Assert.AreEqual(0, Utils.DiffAndShow(pr0, pr2).Count());
         }
 
-        [TestMethod]
-        public void TestJson()
+        private void Bootstrap3Test(string grammerPath, string samplePath)
         {
             var ncGrammer = NcPGP.GetNcGrammerSource();
             var ncccParser1 = NcParser.Load(ncGrammer);
             var ncccParser2 = _P2P(ncccParser1, ncGrammer);
-            var jsonGrammer = Utils.ReadFromAssembly("Nccc.Tests.Json.json.grammer");
-            var jsonParser0 = NcParser.Load(jsonGrammer);
-            var jsonParser1 = _P2P(ncccParser1, jsonGrammer);
-            var jsonParser2 = _P2P(ncccParser2, jsonGrammer);
-            var jsonSample = Utils.ReadFromAssembly("Nccc.Tests.Json.sample.json");
-            var pr0 = jsonParser0.ScanAndParse(jsonSample);
-            var pr1 = jsonParser1.ScanAndParse(jsonSample);
-            var pr2 = jsonParser2.ScanAndParse(jsonSample);
+            var testGrammer = Utils.ReadFromAssembly(grammerPath);
+            var jsonParser0 = NcParser.Load(testGrammer);
+            var jsonParser1 = _P2P(ncccParser1, testGrammer);
+            var jsonParser2 = _P2P(ncccParser2, testGrammer);
+            var testSample = Utils.ReadFromAssembly(samplePath);
+            var pr0 = jsonParser0.ScanAndParse(testSample);
+            var pr1 = jsonParser1.ScanAndParse(testSample);
+            var pr2 = jsonParser2.ScanAndParse(testSample);
             Assert.IsTrue(pr0.IsSuccess());
             Assert.IsTrue(pr1.IsSuccess());
             Assert.IsTrue(pr2.IsSuccess());
             Assert.AreEqual(0, Utils.DiffAndShow(pr0, pr1).Count());
             Assert.AreEqual(0, Utils.DiffAndShow(pr0, pr2).Count());
+        }
+
+        [TestMethod]
+        public void TestJson()
+        {
+            Bootstrap3Test("Nccc.Tests.Json.json.grammer", "Nccc.Tests.Json.sample.json");
+        }
+
+        [TestMethod]
+        public void TestCharMode()
+        {
+            Bootstrap3Test("Nccc.Tests.CharMode.charMode.grammer", "Nccc.Tests.CharMode.sample.txt");
         }
     }
 }

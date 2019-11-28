@@ -21,6 +21,8 @@ namespace Nccc
         public string NumberRegex { get; set; }
         public string[] SignificantWhitespaces { get; set; }
 
+        public bool CharMode { get; set; } = false;
+
         public const string NumberPattern = "([+-]?\\d+(\\.\\d+)?([Ee]-?\\d+)?)";
 
         public Locale _ { get; }
@@ -117,7 +119,7 @@ namespace Nccc
             return new Regex($"^{pattern}").Match(str, start.Offset, str.Length - start.Offset);
         }
 
-        public Token Scan1(string str, TextPosition start)
+        private Token _DefaultScan1(string str, TextPosition start)
         {
             _MatchResult mr;
             do
@@ -184,6 +186,7 @@ namespace Nccc
                 var text = matchText.Substring(mark.Length, matchText.Length - 2 * mark.Length)
                     .Replace($"\\{mark}", mark)
                     .Replace(@"\n", "\n")
+                    .Replace(@"\r", "\r")
                     .Replace(@"\t", "\t")
                     .Replace(@"\\", @"\");
                 return Token.MakeStr(text, start, start.Shift(matchText));
@@ -237,6 +240,29 @@ namespace Nccc
                 }
             }
             return Token.MakeToken(sb.ToString(), start, pos);
+        }
+
+        private Token _CharModeScan1(string str, TextPosition start)
+        {
+            if (str.Length == start.Offset)
+            {
+                return Token.MakeEof(start);
+            }
+            var c = str[start.Offset].ToString();
+            return Token.MakeToken(c, start, start.Shift(c));
+        }
+
+        public Token Scan1(string str, TextPosition start)
+        {
+            // ugly implementation
+            // TODO: 抽象IScanner接口
+            if (CharMode)
+            {
+                return _CharModeScan1(str, start);
+            } else
+            {
+                return _DefaultScan1(str, start);
+            }
         }
     }
 
@@ -387,7 +413,7 @@ namespace Nccc
 
     public class FilteredStream<T> : BaseStream<T>
     {
-        private BaseStream<T> _stream;
+        private readonly BaseStream<T> _stream;
         private readonly Func<T, bool> _pred;
 
         public FilteredStream(BaseStream<T> stream, Func<T, bool> pred)
@@ -443,18 +469,18 @@ namespace Nccc
     public class TokenStream: BaseStream<Token>
     {
         private readonly Scanner _scanner;
-        private Token _cur;
+        private readonly Token _cur;
 
-        public String Str { get; }
+        public string Str { get; }
 
-        public TokenStream(Scanner scanner, String str, TextPosition pos)
+        public TokenStream(Scanner scanner, string str, TextPosition pos)
         {
             _scanner = scanner;
             Str = str;
             _cur = scanner.Scan1(Str, pos);
         }
 
-        public TokenStream(Scanner scanner, String str) : this(scanner, str, TextPosition.StartPos)
+        public TokenStream(Scanner scanner, string str) : this(scanner, str, TextPosition.StartPos)
         {
         }
 

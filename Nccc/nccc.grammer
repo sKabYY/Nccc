@@ -36,7 +36,8 @@ parser-option-stm = parser-option (@or on:'on' off:'off')
 locale-option-stm = locale-option (@? <str>)
 
 scanner-option = (@err'unknown scanner option'
-                      (@or set-delims:'@set-delims'
+                      (@or use-char-mode: '@use-char-mode'
+					       set-delims:'@set-delims'
                            set-line-comment:'@set-line-comment'
                            set-comment-start:'@set-comment-start'
                            set-comment-end:'@set-comment-end'
@@ -68,6 +69,7 @@ exp = (@or named-exp:named-exp
 		   seq-exp:seq-exp
 		   any-exp:any-exp
 		   token-type-exp:token-type-exp
+		   array-exp:array-exp
 		   dbg-exp:dbg-exp
 		   dbg-1exp:dbg-1exp
 		   word-exp:word
@@ -79,6 +81,7 @@ glob-exp = '~' exp
 op-exp = lparen cmb-op (@* exp) rparen
 err-exp = lparen '@err' <str> (@+ exp) rparen
 seq-exp = lparen (@+ exp) rparen
+array-exp = '[' <number> ']' exp
 dbg-exp = '[' (@+ exp) ']'
 any-exp = '<' '*' '>'
 token-type-exp = '<' variable '>'

@@ -92,6 +92,7 @@ namespace Nccc
         protected IParser CSeq(params IParser[] ps)
         {
             // TODO: 使用SeqParserImpl简化parser复杂度
+            if (ps.Length == 0) throw new ParseException($"empty CSeq");
             if (ps.Length == 1) return ps.First();
             return new ParserImpl((toks, stk) =>
             {
@@ -344,6 +345,12 @@ namespace Nccc
         {
             var parser = CSeq(ps);
             return CSeq(parser, CStar(sepParser, parser));
+        }
+
+        protected IParser CArray(IParser parser, int n)
+        {
+            var ps = Enumerable.Repeat(parser, n).ToArray();
+            return CSeq(ps);
         }
 
         private IParser _EnvGet(string name)

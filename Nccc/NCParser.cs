@@ -11,6 +11,7 @@ namespace Nccc
 
     public class NcPGP: Parsec  // short for NcParserGeneratorParser
     {
+        public const string USE_CHAR_MODE = "use-char-mode";
         public const string SET_DELIMS = "set-delims";
         public const string SET_LINE_COMMENT = "set-line-comment";
         public const string SET_COMMENT_START = "set-comment-start";
@@ -49,6 +50,7 @@ namespace Nccc
         public const string ERR_EXP = "err-exp";
         public const string ANY_EXP = "any-exp";
         public const string TOKEN_TYPE_EXP = "token-type-exp";
+        public const string ARRAY_EXP = "array-exp";
         public const string DBG_EXP = "dbg-exp";
         public const string DBG_1EXP = "dbg-1exp";
         public const string WORD_EXP = "word-exp";
@@ -68,7 +70,7 @@ namespace Nccc
 
         public static void InitScanner(Scanner scanner)
         {
-            scanner.Delims = new string[] { "(", ")", "[", "]", "{", "}", "<", ">", "`", "::", "=", ":", "~", "??" };
+            scanner.Delims = new string[] { "(", ")", "?[", "[", "]", "{", "}", "<", ">", "`", "::", "=", ":", "~", "??" };
             scanner.LineComment = new string[] { ";" };
             scanner.CommentStart = "#|";
             scanner.CommentEnd = "|#";
@@ -85,6 +87,7 @@ namespace Nccc
             InitScanner(Scanner);
 
             var scanner_option = CIfFail("unknown scanner option", COr(
+                CIs(USE_CHAR_MODE, PEq("@use-char-mode")),
                 CIs(SET_DELIMS, PEq("@set-delims")),
                 CIs(SET_LINE_COMMENT, PEq("@set-line-comment")),
                 CIs(SET_COMMENT_START, PEq("@set-comment-start")),
@@ -134,9 +137,10 @@ namespace Nccc
             var op_exp = CSeq(lparen, cmb_op, CStar(Get(EXP)), rparen);
             var err_exp = CSeq(lparen, PEq("@err"), PTokenType(TokenType.Str), CPlus(Get(EXP)), rparen);
             var seq_exp = CSeq(lparen, CPlus(Get(EXP)), rparen);
-            var dbg_exp = CSeq(PEq("["), CPlus(Get(EXP)), PEq("]"));
             var any_exp = CSeq(PEq("<"), PEq("*"), PEq(">"));
             var token_type_exp = CSeq(PEq("<"), PRegex(variablePattern), PEq(">"));
+            var array_exp = CSeq(PEq("["), PTokenType(TokenType.Number), PEq("]"), Get(EXP));
+            var dbg_exp = CSeq(PEq("?["), CPlus(Get(EXP)), PEq("]"));
             var dbg_1exp = CSeq(PEq("??"), Get(EXP));
             var exp = DefParser(EXP, COr(
                 CIs(NAMED_EXP, named_exp),
@@ -146,6 +150,7 @@ namespace Nccc
                 CIs(SEQ_EXP, seq_exp),
                 CIs(ANY_EXP, any_exp),
                 CIs(TOKEN_TYPE_EXP, token_type_exp),
+                CIs(ARRAY_EXP, array_exp),
                 CIs(DBG_EXP, dbg_exp),
                 CIs(DBG_1EXP, dbg_1exp),
                 CIs(WORD_EXP, word),
@@ -308,6 +313,9 @@ namespace Nccc
                 case NcPGP.SET_SIGNIFICANT_WHITESPACES:
                     Scanner.SignificantWhitespaces = values;
                     break;
+                case NcPGP.USE_CHAR_MODE:
+                    Scanner.CharMode = true;
+                    break;
             }
         }
 
@@ -354,15 +362,31 @@ namespace Nccc
                 type(NcPGP.SEQ_EXP, es => CSeq(_ValueOf(es)));
                 type(NcPGP.ANY_EXP, es => PAny());
                 type(NcPGP.TOKEN_TYPE_EXP, es => PTokenType(es.First().Value));
+                type(NcPGP.ARRAY_EXP, es =>
+                {
+                    var parser = _ValueOf(es[1]);
+                    if (int.TryParse(es[0].Value, out int n))
+                    {
+                        return CArray(parser, n);
+                    }
+                    var pos = es[0].Start;
+                    throw new ParseException($"expect an integer at row {pos.Linenum} column {pos.Colnum}");
+                });
                 type(NcPGP.DBG_EXP, es => CDebug(CSeq(_ValueOf(es))));
                 type(NcPGP.DBG_1EXP, es => CDebug(_ValueOf(es.First())));
                 type(NcPGP.WORD_EXP, es =>
                 {
                     var word = es.First().Value;
-                    if (SplitWord)
+                    if (Scanner.CharMode)
+                    {
+                        return CSeq(word
+                            .Select(c => PEq(c.ToString(), CaseSensitive))
+                            .ToArray());
+                    }
+                    else if (!string.IsNullOrWhiteSpace(word) && SplitWord)
                     {
                         return CSeq(word.Split()
-                            .Where(s => s != string.Empty)
+                            .Where(s => !string.IsNullOrEmpty(s))
                             .Select(w => PEq(w, CaseSensitive))
                             .ToArray());
                     }
