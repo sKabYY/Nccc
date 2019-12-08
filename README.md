@@ -1,4 +1,7 @@
 # Nccc
+
+> ## 以下为1.0.0版本的文档。2.0.0文档待更新……
+
 > .Net Compiler Compiler Combinator
 >
 > Make Making Parser Easy
