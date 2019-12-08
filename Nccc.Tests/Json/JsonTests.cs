@@ -1,4 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Nccc.Common;
+using Nccc.Parser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,9 +16,9 @@ namespace Nccc.Tests.Json
         [TestMethod]
         public void TestSample()
         {
-            var src = Utils.ReadFromAssembly("Nccc.Tests.Json.sample.json");
+            var src = Assembly.GetExecutingAssembly().ReadString("Nccc.Tests.Json.sample.json");
             var parser = NcParser.LoadFromAssembly(Assembly.GetExecutingAssembly(), "Nccc.Tests.Json.json.grammer");
-            var parseResult = parser.ScanAndParse(src);
+            var parseResult = parser.Parse(src);
             Console.WriteLine(parseResult.ToSExp().ToPrettyString());
             Assert.IsTrue(parseResult.IsSuccess());
         }
@@ -34,7 +36,7 @@ namespace Nccc.Tests.Json
                     { "expect", expectMessage }
                 });
             });
-            var parseResult = parser.ScanAndParse(src);
+            var parseResult = parser.Parse(src);
             Console.WriteLine(parseResult.ToSExp().ToPrettyString());
             Assert.IsFalse(parseResult.IsSuccess());
             Assert.IsTrue(parseResult.Message.Contains(expectMessage));

@@ -1,6 +1,6 @@
 ﻿:: add
 
-@set-delims '(' ')' '[' ']' '{' '}' '+' '-' '*' '/' '^'
+@include-builtin
 
 add = (@or add:(mul '+' add)
            sub:(mul'-' add)
@@ -17,4 +17,4 @@ primary = (@or par:('(' add ')')
                par:('[' add ']')
                par:('{' add '}')
                neg:('-' pow)
-               num:<number>)
+               num:number)

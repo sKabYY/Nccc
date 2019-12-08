@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Nccc.Parser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,11 +11,15 @@ namespace Nccc.Tests
     [TestClass]
     public class SamplesTests
     {
-        private void _ParseAndPrint(string grammer, string source)
+        private void ParseAndPrint(string grammer, string source)
         {
-            var parser = NcParser.Load(grammer);
-            var result = parser.ScanAndParse(source);
+            var postProcessedGrammer = @"
+::root
+@include-builtin
+" + grammer;
+            var parser = NcParser.Load(postProcessedGrammer);
             Console.WriteLine($"source: \"{source}\"");
+            var result = parser.Parse(source);
             Console.WriteLine(result.ToSExp().ToPrettyString());
             Assert.IsTrue(result.IsSuccess());
         }
@@ -22,74 +27,74 @@ namespace Nccc.Tests
         [TestMethod]
         public void ParseString()
         {
-            _ParseAndPrint(grammer: "::root\nroot = 'A'", source: "A");
+            ParseAndPrint(grammer: "root = 'A'", source: "A");
         }
 
         [TestMethod]
         public void ParseSeq()
         {
-            _ParseAndPrint(grammer: "::root\nroot = (@.. 'A' 'B')", source: "A B");
-            _ParseAndPrint(grammer: "::root\nroot = ('A' 'B')", source: "A B");
-            _ParseAndPrint(grammer: "::root\nroot = 'A' 'B'", source: "A B");
+            ParseAndPrint(grammer: "root = (@.. 'A' 'B')", source: "A B");
+            ParseAndPrint(grammer: "root = ('A' 'B')", source: "A B");
+            ParseAndPrint(grammer: "root = 'A' 'B'", source: "A B");
         }
 
         [TestMethod]
         public void ParseOr()
         {
-            var grammer = "::root\nroot = (@or 'A' 'B')";
-            _ParseAndPrint(grammer: grammer, source: "A");
-            _ParseAndPrint(grammer: grammer, source: "B");
+            var grammer = "root = (@or 'A' 'B')";
+            ParseAndPrint(grammer: grammer, source: "A");
+            ParseAndPrint(grammer: grammer, source: "B");
         }
         [TestMethod]
         public void ParseMaybe()
         {
-            var grammer = "::root\nroot = (@? 'A')";
-            _ParseAndPrint(grammer: grammer, source: "");
-            _ParseAndPrint(grammer: grammer, source: "A");
+            var grammer = "root = (@? 'A')";
+            ParseAndPrint(grammer: grammer, source: "");
+            ParseAndPrint(grammer: grammer, source: "A");
         }
 
         [TestMethod]
         public void ParseStar()
         {
-            var grammer = "::root\nroot = (@* 'A')";
-            _ParseAndPrint(grammer: grammer, source: "");
-            _ParseAndPrint(grammer: grammer, source: "A A A A");
+            var grammer = "root = (@* 'A')";
+            ParseAndPrint(grammer: grammer, source: "");
+            ParseAndPrint(grammer: grammer, source: "A A A A");
         }
 
         [TestMethod]
         public void ParseStarAOrB()
         {
-            var grammer = "::root\nroot = (@* (@or 'A' 'B'))";
-            _ParseAndPrint(grammer: grammer, source: "B B");
-            _ParseAndPrint(grammer: grammer, source: "A A");
-            _ParseAndPrint(grammer: grammer, source: "A B");
-            _ParseAndPrint(grammer: grammer, source: "A B A A");
+            var grammer = "root = (@* (@or 'A' 'B'))";
+            ParseAndPrint(grammer: grammer, source: "B B");
+            ParseAndPrint(grammer: grammer, source: "A A");
+            ParseAndPrint(grammer: grammer, source: "A B");
+            ParseAndPrint(grammer: grammer, source: "A B A A");
         }
 
         [TestMethod]
         public void ParseNumber()
         {
-            _ParseAndPrint(grammer: "::root\nroot = <number>", source: "1.1");
+            ParseAndPrint(grammer: "root = number", source: "1.1");
         }
 
         [TestMethod]
         public void ParseNumberOrStringA()
         {
-            var grammer = "::root\nroot = (@or <number> 'A')";
-            _ParseAndPrint(grammer: grammer, source: "1.1");
-            _ParseAndPrint(grammer: grammer, source: "A");
+            var grammer = "root = (@or number 'A')";
+            ParseAndPrint(grammer: grammer, source: "1.1");
+            ParseAndPrint(grammer: grammer, source: "A");
         }
 
         [TestMethod]
         public void ParseStarNumberOrStringA()
         {
-            var grammer = "::root\nroot = (@* (@or <number> 'A'))";
-            _ParseAndPrint(grammer: grammer, source: "1.1");
-            _ParseAndPrint(grammer: grammer, source: "A");
-            _ParseAndPrint(grammer: grammer, source: "A A");
-            _ParseAndPrint(grammer: grammer, source: "1.1 2");
-            _ParseAndPrint(grammer: grammer, source: "A 23");
-            _ParseAndPrint(grammer: grammer, source: "A 1.2 A A");
+            var grammer = "root = (@* (@or number #'A'))";
+            ParseAndPrint(grammer: grammer, source: "1.1");
+            ParseAndPrint(grammer: grammer, source: "A");
+            ParseAndPrint(grammer: grammer, source: "A A");
+            ParseAndPrint(grammer: grammer, source: "1.1 2");
+            ParseAndPrint(grammer: grammer, source: "A 23");
+            ParseAndPrint(grammer: grammer, source: "A 1.2 A A");
         }
     }
 }

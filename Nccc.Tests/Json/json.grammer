@@ -1,25 +1,22 @@
 ﻿:: json
 
-@set-delims '{' '}' '[' ']' ',' ':'
-@set-line-comment
-@set-comment-start
-@set-comment-end
-@set-operators
-@set-quotation-marks '"'
-@set-regex-marks
-@set-lisp-char
-@set-significant-whitespaces
+@include-builtin
+
 @set-message-locale-start 'L{'
 @set-message-locale-end '}'
+
+spacing = ~(@* \space)
+
+str = \" (@* (@! \") <*>) \" spacing
 
 json = (@or array:array object:object value)
 
 array = '[' (@,* ',' json) ']'
 
-object = '{' (@,* ',' pair:(key:<str> ':' value:json)) '}'
+object = '{' (@,* ',' pair:(key:str ':' value:json)) '}'
 
 value = (@err'L{invalid value type}'
-             (@or string:<str>
-                  number:<number>
-			      bool:/true|false/
+             (@or string:str
+                  number:number
+			      bool:(@or #'true' #'false')
 			      null:'null'))

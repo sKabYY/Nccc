@@ -1,5 +1,13 @@
 ﻿:: stms
 
+@include-builtin
+@lex-ignore spacing
+
+spacing = ~(@* \space)
+
+string = \' (@* (@! \') <*>) \' spacing
+identifier = (@! 'CONSTRAINT') (@+ (@or #\_ alpha digit)) spacing
+
 stm = (@or create_table:create-table-stm
            comment:comment-stm
            create_index:create-index-stm
@@ -15,10 +23,6 @@ stm = (@or create_table:create-table-stm
            grant:grant-stm
            create_synonym:create-synonym-stm
 )
-
-identifier = (@! 'CONSTRAINT') /^[a-zA-Z0-9_]+$/
-
-string = <str>
 
 ;;; CREATE TABLE
 
@@ -54,7 +58,7 @@ datetime-datatype =
   (@or date:'DATE' timestamp:'TIMESTAMP')  ; TODO
 large-object-datatype =
   (@or blob:'BLOB' clob:'CLOB' nclob:'NCLOB' bfile:'BFILE')
-size = <number>
+size = number
 DefaultConstantExpression =
   (@or null:'NULL'
        ('CURRENT' (@or current_schema:'SCHEMA'

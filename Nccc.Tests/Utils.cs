@@ -1,6 +1,7 @@
 ﻿using DiffPlex;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
+using Nccc.Parser;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,10 +14,6 @@ namespace Nccc.Tests
 {
     static class Utils
     {
-        public static string ReadFromAssembly(string path)
-        {
-            return NcPGP.ReadStringFromAssembly(Assembly.GetExecutingAssembly(), path);
-        }
         public static DiffPiece[] DiffAndShow(ParseResult before, ParseResult after)
         {
             return DiffAndShow(before.ToSExp().ToPrettyString(), after.ToSExp().ToPrettyString());

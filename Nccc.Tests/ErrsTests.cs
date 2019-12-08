@@ -1,9 +1,9 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Nccc.Parser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Nccc.Tests
 {
@@ -31,10 +31,24 @@ root = (@err'L{expect} A L{or} B' oo:(@or 'A' 'B'))
                 });
             });
             var source = "C";
-            var result = parser.ScanAndParse(source);
+            var result = parser.Parse(source);
             Console.WriteLine(result.ToSExp().ToPrettyString());
             Assert.IsFalse(result.IsSuccess());
             Assert.AreEqual("盼望着 A 或 B", result.Message);
+        }
+
+        [TestMethod]
+        public void TestCIfFail()
+        {
+            var grmr = @"
+::root
+@include-builtin
+root = (@+ alpha) \eof
+";
+            var parser = NcParser.Load(grmr);
+            var result = parser.Parse("a1");
+            Console.WriteLine(result.ToSExp().ToPrettyString());
+            Assert.IsFalse(result.IsSuccess());
         }
     }
 }

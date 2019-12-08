@@ -1,0 +1,14 @@
+﻿:: persons
+
+@lex-mode
+
+persons = (@,* nl person) (@* nl)
+
+person = persion:(name:name age:age sex:sex)
+
+name = [5]char
+age = [3]char
+sex = [1]char
+
+char = (@! nl) <*>
+nl = ~\newline

@@ -1,0 +1,90 @@
+﻿:: program
+
+#| ======================================================= |#
+
+@include-builtin
+
+@case-sensitive on
+@split-word on
+@lex-ignore spacing
+
+#| ======================================================= |#
+
+comment-start = \# \|
+comment-end = \| \#
+comment = (@or (\; (@* (@! \newline) <*>))
+               (comment-start (@* (@! comment-end) <*>) comment-end))
+spacing = ~(@* (@or \space comment))
+iden-alpha = (@or #\_ #\- alpha)
+
+variable = (@err'invalid var' iden-alpha (@* (@or iden-alpha digit))) spacing
+char-iden = (@or special-char:(@or #'eof' #'newline' #'space')
+                 normal-char:((@err'expect a char' (@! \space)) <*> spacing))
+hchar = \# \\ char-iden
+char = \\ char-iden
+string = \' (@* (@! \') <*>) \' spacing
+hstring = \# \' (@* (@! \') <*>) \' spacing
+integer = (@+ digit) spacing
+
+#| ======================================================= |#
+
+program = program:(def-root:def-root
+                   option-section:(@* option-stm:option-stm)
+				   def-section:(@* def-stm:def-stm))
+
+#| === root === |#
+
+def-root = '::' variable
+
+#| === option === |#
+
+on-or-off = (@or on:'on' off:'off')
+option-stm = (@or (case-sensitive:'@case-sensitive' on-or-off)
+                  (split-word:'@split-word' on-or-off)
+				  (lex-ignore:'@lex-ignore' spacing-parser:variable)
+				  (lex-mode:'@lex-mode')
+				  (include-builtin:'@include-builtin')
+				  (set-message-locale-start:'@set-message-locale-start' locale-start:string)
+				  (set-message-locale-start:'@set-message-locale-end' locale-end:string))
+
+#| === def === |#
+
+def-stm = lhs:variable '=' (@+ exp (@! '='))
+
+exp = (@or named-exp:named-exp
+           glob-exp:glob-exp
+		   op-exp:op-exp
+		   err-exp:err-exp
+		   seq-exp:seq-exp
+		   any-exp:any-exp
+		   array-exp:array-exp
+		   dbg-exp:dbg-exp
+		   dbg-1exp:dbg-1exp
+		   char-exp: hchar
+		   glob-char-exp: char
+		   word-exp:hstring
+		   glob-word-exp:string
+		   var-exp:(variable (@! ':')))
+
+named-exp = name:variable ':' exp
+glob-exp = '~' exp
+op-exp = lparen cmb-op (@* exp) rparen
+err-exp = lparen '@err' message:string (@+ exp) rparen
+seq-exp = lparen (@+ exp) rparen
+array-exp = '[' size:integer ']' exp
+dbg-exp = '?[' (@+ exp) ']'
+any-exp = '<*>'
+dbg-1exp = '??' exp
+
+cmb-op = (@err'unknown op' op:(@or
+              #'@+'
+			  #'@*'
+			  #'@,*'
+			  #'@,+'
+			  #'@or'
+			  #'@..'
+			  #'@!'
+			  #'@?'))
+
+lparen = '('
+rparen = ')'
