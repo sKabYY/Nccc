@@ -292,6 +292,8 @@ variable = (@err'invalid var' /[a-zA-Z_\-][a-zA-Z0-9_\-]*/)
 
 `~p`：若能被`p`成功parse，则返回空
 
+`[n] p`：连续`n`次匹配`p`
+
 ### Named
 
 `{name}:parser`：带名称的parser，匹配成功时增加一个Type为`{name}`的节点。
