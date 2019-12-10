@@ -1,9 +1,25 @@
-﻿:: add
+﻿; 定义add为root parser，即最终生成的parser
+:: add
 
+; 导入内置parser
 @include-builtin
 
+; 指定词间需要过滤的空白字符
+@lex-ignore spacing
+
+;;; 词法分析
+
+; 匹配空白字符
+spacing = ~(@* \space)
+
+; 匹配浮点数，每个词末尾需要跟上spacing来过滤空白字符。
+; buitlin中已有匹配数字的parser，这里出于演示的目的另外定义了float。
+float = (@? #\+ #\-) (@+ digit) (@? #\. (@+ digit)) spacing
+
+;;; 语法分析 - 组合parser
+
 add = (@or add:(mul '+' add)
-           sub:(mul'-' add)
+           sub:(mul '-' add)
            mul)
 
 mul = (@or mul:(pow '*' mul)
@@ -17,4 +33,4 @@ primary = (@or par:('(' add ')')
                par:('[' add ']')
                par:('{' add '}')
                neg:('-' pow)
-               num:number)
+               num:float)

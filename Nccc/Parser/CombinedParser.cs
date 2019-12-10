@@ -111,10 +111,10 @@ namespace Nccc.Parser
         {
             var digits = CPlus(PDigit());
             return CSeq(
-                CMaybe(COr(PChar('+'), PChar('-'))),
-                digits,
-                CMaybe(CSeq(PChar('.'), digits)),
-                CMaybe(
+                CMaybe(COr(PChar('+'), PChar('-'))),  /* 符号 */
+                digits,                               /* 整数部分 */
+                CMaybe(CSeq(PChar('.'), digits)),     /* 小数部分 */
+                CMaybe(                               /* 指数部分 */
                     COr(PChar('E'), PChar('e')),
                     CMaybe(PChar('-')),
                     digits),
@@ -123,9 +123,6 @@ namespace Nccc.Parser
 
         protected void LoadBuildinParsers()
         {
-            //DefParser("EOF", PEof());
-            //DefParser("space", PSpace());
-            //DefParser("newline", PNewline());
             DefParser("alpha", PAlpha());
             DefParser("digit", PDigit());
             DefParser("number", PNumber());

@@ -15,13 +15,15 @@ comment-end = \| \#
 comment = (@or (\; (@* (@! \newline) <*>))
                (comment-start (@* (@! comment-end) <*>) comment-end))
 spacing = ~(@* (@or \space comment))
-iden-alpha = (@or #\_ #\- alpha)
 
-variable = (@err'invalid var' iden-alpha (@* (@or iden-alpha digit))) spacing
+var-start = (@or #\_ #\- alpha)
+variable = (@err'invalid var' var-start (@* (@or var-start digit))) spacing
+
 char-iden = (@or special-char:(@or #'eof' #'newline' #'space')
                  normal-char:((@err'expect a char' (@! \space)) <*> spacing))
 hchar = \# \\ char-iden
 char = \\ char-iden
+
 string = \' (@* (@! \') <*>) \' spacing
 hstring = \# \' (@* (@! \') <*>) \' spacing
 integer = (@+ digit) spacing
