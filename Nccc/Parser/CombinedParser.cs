@@ -151,7 +151,7 @@ namespace Nccc.Parser
         {
             return new ParserImpl((toks, stk) =>
             {
-                if (toks.IsEof())
+                if (toks.IsEndOfStream())
                 {
                     return OutputFail(failMessage, toks);
                 }
@@ -208,7 +208,7 @@ namespace Nccc.Parser
         {
             return new ParserImpl((toks, stk) =>
             {
-                if (toks.IsEof())
+                if (toks.IsEndOfStream())
                 {
                     return OutputFail($"ANY fail: {_.L("reach eof")}", toks);
                 }
@@ -356,7 +356,7 @@ namespace Nccc.Parser
             var parser = CSeq(ps);
             return new ParserImpl((toks, stk) =>
             {
-                if (!toks.IsEof())
+                if (!toks.IsEndOfStream())
                 {
                     var r = parser.Parse(toks, stk);
                     if (r.IsSuccess())

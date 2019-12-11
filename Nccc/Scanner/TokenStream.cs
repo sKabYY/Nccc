@@ -32,7 +32,7 @@ namespace Nccc.Scanner
             return new TokenStream(_scanner, Str, _cur.End);
         }
 
-        public bool IsEof()
+        public bool IsEndOfStream()
         {
             return _cur.IsEof();
         }
