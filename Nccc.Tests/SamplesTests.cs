@@ -146,5 +146,25 @@ spacing = ~(@* \space)
             Assert.IsTrue(result.IsSuccess());
             Assert.IsFalse(result.Nodes.First().StringValue().EndsWith(' '));
         }
+
+        [TestMethod]
+        public void EofTests()
+        {
+            var grammer = @"
+root = (@+ num:number)
+";
+            var postProcessedGrammer = @"
+::root
+@include-builtin
+spacing = ~(@* \space)
+" + grammer;
+            var parser = NcParser.Load(postProcessedGrammer);
+            var source = "1.1 1.2 abc ef";
+            Console.WriteLine($"source: \"{source}\"");
+            var result = parser.Parse(source);
+            Console.WriteLine(result.ToSExp().ToPrettyString());
+            Assert.IsFalse(result.IsSuccess());
+            Assert.IsTrue(result.Message.Contains("EOF"));
+        }
     }
 }

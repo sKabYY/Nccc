@@ -32,11 +32,15 @@ namespace Nccc.Parser
 
         protected void SetRootParser(IParser parser)
         {
-            RootParser = CSeq(PSpacing(), parser, PEof());
+            RootParser = parser;
         }
 
         public ParseResult Parse(string src)
         {
+            if (RootParser == null)
+            {
+                throw new ParseException("RootParser is uninitialized");
+            }
             return ParseBy(RootParser, src);
         }
 
@@ -48,12 +52,13 @@ namespace Nccc.Parser
         private ParseResult ParseBy(IParser parser, string src)
         {
             var toks = Scanner.Scan(src);
-            if (RootParser == null)
-            {
-                throw new ParseException("RootParser is uninitialized");
-            }
             ResetMemorizedParsers();
-            return parser.Parse(toks, LeftRecurDetection ? ParseStack.Empty : FakeParseStack.Empty);
+            return WrapperEof(parser).Parse(toks, LeftRecurDetection ? ParseStack.Empty : FakeParseStack.Empty);
+        }
+
+        private IParser WrapperEof(IParser parser)
+        {
+            return CSeq(PSpacing(), parser, PEof());
         }
 
         private readonly IList<MemorizedParser> _memorizedParsers = new List<MemorizedParser>();

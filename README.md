@@ -80,7 +80,7 @@ private NcParser _parser = NcParser.LoadFromAssembly(Assembly.GetExecutingAssemb
 Parse：
 
 ```
-var pr = _parser.ScanAndParse("(5.1+2)*3+-2^3^2");
+var pr = _parser.Parse("(5.1+2)*3+-2^3^2");
 Console.WriteLine(pr.ToSExp().ToPrettyString());
 ```
 
@@ -104,7 +104,6 @@ Console.WriteLine(pr.ToSExp().ToPrettyString());
        (num[(1,14)-(1,15)] 3)
        (num[(1,16)-(1,17)] 2)))))))
 ```
-
 
 # Parser的返回结果类型：ParseResult
 
@@ -331,6 +330,18 @@ var parser = NcParser.Load("::root\nroot = 'A'");
 var parser = NcParser.LoadFromAssembly(Assembly.GetExecutingAssembly(), "Nccc.Tests.Calculator.calculator.grammer");
 ```
 
+## 运行语法分析
+
+调用`Parse`方法进行语法分析：
+```
+var parseResult = parser.Parse("(5.1+2)*3+-2^3^2");
+```
+
+也可以使用`ParseBy`方法指定grammer中定义过的parser来进行语法分析：
+```
+var parseResult = parser.ParseBy("float", "5.1");
+```
+
 ## 国际化
 
 语言需要在加载grammer的时候在初始化方法里指定：
@@ -380,7 +391,7 @@ public void TestMessageLocale()
         });
     });
     var source = "C";
-    var result = parser.ScanAndParse(source);
+    var result = parser.Parse(source);
     Console.WriteLine(result.ToSExp().ToPrettyString());
     Assert.IsFalse(result.IsSuccess());
     Assert.AreEqual("盼望着 A 或 B", result.Message);
@@ -452,7 +463,7 @@ node.Match<T>(type =>
 ```
 private double _Calc(string exp)
 {
-    var pr = _parser.ScanAndParse(exp);
+    var pr = _parser.Parse(exp);
     if (!pr.IsSuccess())
     {
         throw new ArgumentException($"Parsing fail: {pr.ToSExp().ToPrettyString()}");
@@ -495,7 +506,7 @@ Dig方法用于按照路径从AST取特定的Node或者值。路径必须指定�
 
 仍然是计算器的例子，从语法分析的结果中取节点/值：
 ```
-var pr = _parser.ScanAndParse("(5.1+2)*3+-2^3^2");
+var pr = _parser.Parse("(5.1+2)*3+-2^3^2");
 var node = Node.DigNode(pr.Nodes, "add", "mul");
 Assert.AreEqual("mul", node.Type);
 var value = Node.DigValue(pr.Nodes, "add", "neg", "pow", "num");
