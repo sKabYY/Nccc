@@ -50,7 +50,7 @@ namespace Nccc.Parser
             SplitWord = true;
             LeftRecurDetection = true;
             UseMemorizedParser = true;
-            SpacingParser = CStar(PSpace());
+            SpacingParser = CGlob(CStar(PSpace()));
             // ===============
 
             var nodes = grammerAst.Children;

@@ -16,6 +16,7 @@ namespace Nccc.Tests
             var postProcessedGrammer = @"
 ::root
 @include-builtin
+spacing = ~(@* \space)
 " + grammer;
             var parser = NcParser.Load(postProcessedGrammer);
             Console.WriteLine($"source: \"{source}\"");
@@ -95,6 +96,55 @@ namespace Nccc.Tests
             ParseAndPrint(grammer: grammer, source: "1.1 2");
             ParseAndPrint(grammer: grammer, source: "A 23");
             ParseAndPrint(grammer: grammer, source: "A 1.2 A A");
+        }
+
+        private void ParseByAndPrint(string grammer, string parserName, string source)
+        {
+            var postProcessedGrammer = @"
+::root
+@include-builtin
+spacing = ~(@* \space)
+" + grammer;
+            var parser = NcParser.Load(postProcessedGrammer);
+            Console.WriteLine($"source: \"{source}\"");
+            var result = parser.ParseBy(parserName, source);
+            Console.WriteLine(result.ToSExp().ToPrettyString());
+            Assert.IsTrue(result.IsSuccess());
+        }
+
+        [TestMethod]
+        public void ParseBy()
+        {
+            var grammer = @"
+root = header footer
+header = (@+ num:number)
+footer = (@+ var:(@+ alpha) spacing)
+";
+            ParseAndPrint(grammer: grammer, source: "1.1 1.2 abc ef");
+            ParseByAndPrint(grammer: grammer, parserName: "header", source: "1.1 1.2");
+            ParseByAndPrint(grammer: grammer, parserName: "footer", source: "abc ef");
+        }
+
+        [TestMethod]
+        public void Default_Spacing_Should_Be_Globbed()
+        {
+            var grammer = @"
+root = header footer
+header = (@+ num:number)
+footer = (@+ var:(@+ alpha) spacing)
+";
+            var postProcessedGrammer = @"
+::root
+@include-builtin
+spacing = ~(@* \space)
+" + grammer;
+            var parser = NcParser.Load(postProcessedGrammer);
+            var source = "1.1 1.2 abc ef";
+            Console.WriteLine($"source: \"{source}\"");
+            var result = parser.Parse(source);
+            Console.WriteLine(result.ToSExp().ToPrettyString());
+            Assert.IsTrue(result.IsSuccess());
+            Assert.IsFalse(result.Nodes.First().StringValue().EndsWith(' '));
         }
     }
 }

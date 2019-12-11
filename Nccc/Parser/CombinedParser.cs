@@ -37,13 +37,23 @@ namespace Nccc.Parser
 
         public ParseResult Parse(string src)
         {
+            return ParseBy(RootParser, src);
+        }
+
+        public ParseResult ParseBy(string parser, string src)
+        {
+            return ParseBy(Get(parser), src);
+        }
+
+        private ParseResult ParseBy(IParser parser, string src)
+        {
             var toks = Scanner.Scan(src);
             if (RootParser == null)
             {
                 throw new ParseException("RootParser is uninitialized");
             }
             ResetMemorizedParsers();
-            return RootParser.Parse(toks, LeftRecurDetection ? ParseStack.Empty : FakeParseStack.Empty);
+            return parser.Parse(toks, LeftRecurDetection ? ParseStack.Empty : FakeParseStack.Empty);
         }
 
         private readonly IList<MemorizedParser> _memorizedParsers = new List<MemorizedParser>();
