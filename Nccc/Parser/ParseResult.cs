@@ -74,5 +74,10 @@ namespace Nccc.Parser
             }
             return list;
         }
+
+        public override string ToString()
+        {
+            return ToSExp().ToPrettyString();
+        }
     }
 }
