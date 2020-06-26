@@ -185,9 +185,13 @@ namespace Nccc.Parser
                 path);
         }
 
-        public string DigValue(params string[] path)
+        public Node DigNodeOrNull(params string[] path)
         {
-            return DigNode(path).StringValue();
+            if (TryDigNode(out var node, path))
+            {
+                return node;
+            }
+            return null;
         }
 
         public bool TryDigNode(out Node node, params string[] path)
@@ -200,6 +204,39 @@ namespace Nccc.Parser
                 path);
             node = nd;
             return found;
+        }
+
+        public static Node DigNode(IList<Node> nodes, params string[] path)
+        {
+            return new Node { Children = nodes }.DigNode(path);
+        }
+
+        public static bool TryDigNode(IList<Node> nodes, out Node node, params string[] path)
+        {
+            return new Node { Children = nodes }.TryDigNode(out node, path);
+        }
+
+        public static Node DigNodeOrNull(IList<Node> nodes, params string[] path)
+        {
+            if (TryDigNode(nodes, out var node, path))
+            {
+                return node;
+            }
+            return null;
+        }
+
+        public string DigValue(params string[] path)
+        {
+            return DigNode(path).StringValue();
+        }
+
+        public string DigValueOrNull(params string[] path)
+        {
+            if (TryDigValue(out var value, path))
+            {
+                return value;
+            }
+            return null;
         }
 
         public bool TryDigValue(out string value, params string[] path)
@@ -216,19 +253,9 @@ namespace Nccc.Parser
             }
         }
 
-        public static Node DigNode(IList<Node> nodes, params string[] path)
-        {
-            return new Node { Children = nodes }.DigNode(path);
-        }
-
         public static string DigValue(IList<Node> nodes, params string[] path)
         {
             return DigNode(nodes, path).StringValue();
-        }
-
-        public static bool TryDigNode(IList<Node> nodes, out Node node, params string[] path)
-        {
-            return new Node { Children = nodes }.TryDigNode(out node, path);
         }
     }
 }
